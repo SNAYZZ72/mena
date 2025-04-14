@@ -1,67 +1,123 @@
-// app/(app)/launch.tsx
 import { useRouter } from "expo-router";
-import React, { useEffect, useState } from "react";
-import { View, ActivityIndicator } from "react-native";
+import React, { useEffect } from "react";
+import { View, StyleSheet } from "react-native";
+import Animated, { 
+  useSharedValue, 
+  withTiming, 
+  useAnimatedStyle, 
+  withDelay,
+  withSpring,
+} from "react-native-reanimated";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 import { Image } from "@/components/image";
 import { SafeAreaView } from "@/components/safe-area-view";
 import { Text } from "@/components/ui/text";
-import { H1 } from "@/components/ui/typography";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 
 export default function LaunchScreen() {
   const router = useRouter();
-  const [isLoading, setIsLoading] = useState(true);
+  
+  // Animation values
+  const logoScale = useSharedValue(0.8);
+  const logoOpacity = useSharedValue(0);
+  const textOpacity = useSharedValue(0);
+  
+  // Animated styles
+  const logoStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: logoScale.value }],
+    opacity: logoOpacity.value
+  }));
+  
+  const textStyle = useAnimatedStyle(() => ({
+    opacity: textOpacity.value
+  }));
 
   useEffect(() => {
+    // Start animations
+    logoOpacity.value = withTiming(1, { duration: 800 });
+    logoScale.value = withDelay(400, 
+      withSpring(1, { damping: 14, stiffness: 100 })
+    );
+    textOpacity.value = withDelay(800, 
+      withTiming(1, { duration: 800 })
+    );
+    
+    // Check if the app has been launched before
     const checkFirstLaunch = async () => {
       try {
-        // Debug log to see the flow
         console.log("Checking if first launch...");
         
-        // Check if this is the first time using the app
+        // For testing - You can uncomment this line to clear the has_launched flag
+        // await AsyncStorage.removeItem("@mena_has_launched");
+        
         const hasLaunched = await AsyncStorage.getItem("@mena_has_launched");
         console.log("Has launched before:", hasLaunched);
         
-        // Short delay to show the launch screen
+        // Delay navigation to show the animation
         setTimeout(() => {
-          // Force clear the flag for testing - REMOVE THIS IN PRODUCTION
-          // AsyncStorage.removeItem("@mena_has_launched");
-          
           if (hasLaunched === null || hasLaunched !== "true") {
-            // First use, go to onboarding first
-            console.log("First launch, going to onboarding");
-            // Navigate to onboarding first, we'll set the flag after onboarding completes
+            console.log("First launch, navigating to onboarding");
             router.replace("/onboarding");
-            // Don't mark as launched yet - we'll do this in onboarding.tsx when user completes or skips
           } else {
-            // Already used, go to login screen
-            console.log("Not first launch, going to welcome");
+            console.log("Not first launch, navigating to welcome");
             router.replace("/welcome");
           }
-          setIsLoading(false);
-        }, 2000);
+        }, 2500);
       } catch (error) {
         console.error("Error checking first launch:", error);
-        router.replace("/welcome");
-        setIsLoading(false);
+        setTimeout(() => router.replace("/welcome"), 2500);
       }
     };
 
     checkFirstLaunch();
-  }, [router]);
+  }, []);
 
   return (
-    <SafeAreaView className="flex flex-1 bg-background">
-      <View className="flex flex-1 items-center justify-center">
-        <Image
-          source={require("@/assets/icon.png")}
-          className="w-32 h-32 rounded-xl mb-8"
-        />
-        <H1 className="text-center mb-8">MENA</H1>
-        <Text className="text-center">Your personalized hair care assistant</Text>
-        <ActivityIndicator size="large" className="mt-8" />
+    <SafeAreaView style={styles.container}>
+      <View style={styles.content}>
+        <Animated.View style={logoStyle}>
+          <Image
+            source={require("@/assets/icon.png")}
+            style={styles.logo}
+          />
+        </Animated.View>
+        
+        <Animated.View style={textStyle}>
+          <Text style={styles.title}>MENA</Text>
+          <Text style={styles.subtitle}>Your hair care journey begins</Text>
+        </Animated.View>
       </View>
     </SafeAreaView>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: "#FFFFFF",
+  },
+  content: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 20,
+  },
+  logo: {
+    width: 120,
+    height: 120,
+    borderRadius: 20,
+  },
+  title: {
+    fontSize: 36,
+    fontWeight: "bold",
+    marginTop: 20,
+    color: "#333333",
+    textAlign: "center",
+  },
+  subtitle: {
+    fontSize: 16,
+    color: "#666666",
+    marginTop: 8,
+    textAlign: "center",
+  },
+});
