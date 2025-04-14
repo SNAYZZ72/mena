@@ -93,15 +93,20 @@ export const SupabaseProvider = ({ children }: SupabaseProviderProps) => {
 
 	useEffect(() => {
 		if (!initialized || !appIsReady) return;
-
+	  
 		const inProtectedGroup = segments[1] === "(protected)";
-
-		if (session && !inProtectedGroup) {
-			router.replace("/(app)/(protected)");
-		} else if (!session) {
-			router.replace("/(app)/welcome");
+		
+		// Si on est sur l'écran de lancement ou d'onboarding, ne pas rediriger automatiquement
+		if (segments[0] === "(app)" && (segments[1] === "launch" || segments[1] === "onboarding")) {
+		  return;
 		}
-	}, [initialized, appIsReady, session]);
+	  
+		if (session && !inProtectedGroup) {
+		  router.replace("/(app)/(protected)");
+		} else if (!session && inProtectedGroup) {
+		  router.replace("/(app)/launch");
+		}
+	  }, [initialized, appIsReady, session, segments]);
 
 	const onLayoutRootView = useCallback(async () => {
 		if (appIsReady) {
