@@ -122,7 +122,7 @@ export const SetupScreen: React.FC<SetupScreenProps> = ({
         </Animated.View>
       </ScrollView>
       
-      {/* Footer with Next Button */}
+      {/* Footer with Next Button - Absolute positioning ensures it's always visible */}
       <View style={styles.footer}>
         <Button
           onPress={onNext}
@@ -368,6 +368,7 @@ const styles = StyleSheet.create({
   },
   contentWrapper: {
     flex: 1,
+    marginBottom: 80, // Ensure content doesn't get hidden behind the footer
   },
   footer: {
     position: 'absolute',
@@ -376,7 +377,9 @@ const styles = StyleSheet.create({
     right: 0,
     paddingHorizontal: 20,
     paddingVertical: 16,
-    backgroundColor: 'rgba(34, 34, 34, 0.9)',
+    backgroundColor: 'rgba(34, 34, 34, 0.95)', // Slightly transparent background
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(255, 255, 255, 0.1)',
   },
   nextButton: {
     backgroundColor: '#AA8AD2',

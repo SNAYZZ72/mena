@@ -89,10 +89,10 @@ export const SupabaseProvider = ({ children }: SupabaseProviderProps) => {
 						.from('hair_profiles')
 						.select('*')
 						.eq('user_id', session.user.id)
-						.single();
+						.maybeSingle();
 						
 					// If no profile exists, mark as new user
-					setIsNewUser(!data && !error);
+					setIsNewUser(!data);
 				}
 				
 				setInitialized(true);

@@ -1,60 +1,95 @@
-import React, { useEffect } from 'react';
-import { StyleSheet, View, Image } from 'react-native';
+import React, { useState } from 'react';
+import { View, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { useRouter } from 'expo-router';
-import Animated, { FadeIn } from 'react-native-reanimated';
+import { Feather } from '@expo/vector-icons';
+import Animated from 'react-native-reanimated';
 
 import { useSetup } from '@/context/setup-provider';
-import { Text } from '@/components/ui/text';
-import { Button } from '@/components/ui/button';
+import { OptionCard } from '@/components/ui/setup-components';
 import { SafeAreaView } from '@/components/safe-area-view';
+import { Text } from '@/components/ui/text';
+import { H1 } from '@/components/ui/typography';
 
-export default function SetupIndexScreen() {
+// Gender options
+const genderOptions = [
+  { id: '1', label: 'Male', value: 'male', icon: 'user' },
+  { id: '2', label: 'Female', value: 'female', icon: 'user' },
+  { id: '3', label: 'Non-binary', value: 'non_binary', icon: 'users' },
+  { id: '4', label: 'Prefer not to say', value: 'not_specified', icon: 'user-x' }
+];
+
+export default function GenderScreen() {
   const router = useRouter();
-  const { progress, goToStep } = useSetup();
+  const { hairProfile, updateProfile, progress, currentStep, nextStep } = useSetup();
+  const [selectedGender, setSelectedGender] = useState<string | undefined>(hairProfile.gender);
 
-  // Start the setup process
-  const handleStart = () => {
-    router.push('/setup/gender');
+  // Handle gender selection and immediate navigation
+  const handleSelect = (value: string) => {
+    setSelectedGender(value);
+    // Save and navigate immediately
+    updateProfile('gender', value);
+    // Increment the step counter before navigating
+    nextStep();
+    console.log('Gender selected:', value, '- navigating to next screen');
+    router.push('/(app)/setup/hair-type');
   };
+
+  // Handle back button press
+  const handleBack = () => {
+    router.back();
+  };
+
+  const title = "What's Your Gender?";
+  const subtitle = "This helps us personalize your hair care recommendations";
 
   return (
     <SafeAreaView style={styles.container}>
-      <Animated.View 
-        entering={FadeIn.duration(800)}
-        style={styles.content}
-      >
-        <View style={styles.imageContainer}>
-          <Image
-            source={require('@/assets/icon.png')}
-            style={styles.image}
-            resizeMode="contain"
-          />
+      <View style={styles.screenContainer}>
+        {/* Progress Bar */}
+        <View style={styles.progressContainer}>
+          <View style={styles.progressBackground}>
+            <Animated.View 
+              style={[
+                styles.progressFill, 
+                { width: `${progress}%` }
+              ]}
+            />
+          </View>
         </View>
         
-        <View style={styles.textContainer}>
-          <Text style={styles.title}>Let's Set Up Your Hair Profile</Text>
-          <Text style={styles.description}>
-            Answer a few questions to help us customize your hair care experience.
-            This will help us recommend the best routines and products for your unique hair.
-          </Text>
+        {/* Header */}
+        <View style={styles.header}>
+          {handleBack && (
+            <TouchableOpacity onPress={handleBack} style={styles.backButton}>
+              <Feather name="chevron-left" size={24} color="#FFFFFF" />
+              <Text style={styles.backText}>Back</Text>
+            </TouchableOpacity>
+          )}
         </View>
         
-        <View style={styles.inspirationalContainer}>
-          <Text style={styles.inspirationalTitle}>
-            Healthy Hair Is A Journey
-          </Text>
-          <Text style={styles.inspirationalText}>
-            Your personalized hair care journey starts now. Don't give up!
-          </Text>
-        </View>
-        
-        <Button 
-          style={styles.button}
-          onPress={handleStart}
+        {/* Content */}
+        <ScrollView 
+          style={styles.scrollView} 
+          contentContainerStyle={styles.contentContainer}
+          showsVerticalScrollIndicator={false}
         >
-          <Text style={styles.buttonText}>Start Setup</Text>
-        </Button>
-      </Animated.View>
+          <View style={styles.titleContainer}>
+            <H1 style={styles.title}>{title}</H1>
+            <Text style={styles.subtitle}>{subtitle}</Text>
+          </View>
+          
+          <View style={styles.optionsContainer}>
+            {genderOptions.map((option) => (
+              <OptionCard
+                key={option.id}
+                option={option}
+                isSelected={selectedGender === option.value}
+                onSelect={handleSelect}
+              />
+            ))}
+          </View>
+        </ScrollView>
+      </View>
     </SafeAreaView>
   );
 }
@@ -64,67 +99,61 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#222222',
   },
-  content: {
+  screenContainer: {
     flex: 1,
-    justifyContent: 'center',
+  },
+  progressContainer: {
+    paddingHorizontal: 20,
+    paddingTop: 16,
+  },
+  progressBackground: {
+    height: 6,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    borderRadius: 3,
+    overflow: 'hidden',
+  },
+  progressFill: {
+    height: '100%',
+    backgroundColor: '#AA8AD2',
+    borderRadius: 3,
+  },
+  header: {
+    paddingHorizontal: 20,
+    paddingTop: 16,
+    flexDirection: 'row',
     alignItems: 'center',
-    padding: 24,
   },
-  imageContainer: {
-    marginBottom: 32,
-  },
-  image: {
-    width: 120,
-    height: 120,
-    borderRadius: 20,
-  },
-  textContainer: {
+  backButton: {
+    flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 40,
+  },
+  backText: {
+    color: '#FFFF00',
+    marginLeft: 4,
+  },
+  scrollView: {
+    flex: 1,
+  },
+  contentContainer: {
+    paddingHorizontal: 20,
+    paddingBottom: 40,
+  },
+  titleContainer: {
+    marginTop: 24,
+    marginBottom: 30,
   },
   title: {
-    fontSize: 24,
-    fontWeight: 'bold',
     color: '#FFFFFF',
-    marginBottom: 16,
-    textAlign: 'center',
+    fontSize: 28,
+    fontWeight: 'bold',
+    marginBottom: 12,
   },
-  description: {
-    fontSize: 16,
+  subtitle: {
     color: '#CCCCCC',
-    textAlign: 'center',
+    fontSize: 16,
     lineHeight: 24,
   },
-  inspirationalContainer: {
-    backgroundColor: '#AA8AD2',
-    paddingVertical: 20,
-    paddingHorizontal: 24,
-    borderRadius: 12,
-    marginBottom: 40,
-    width: '100%',
-  },
-  inspirationalTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#FFFFFF',
-    marginBottom: 8,
-    textAlign: 'center',
-  },
-  inspirationalText: {
-    fontSize: 14,
-    color: '#FFFFFF',
-    textAlign: 'center',
-  },
-  button: {
-    backgroundColor: '#AA8AD2',
-    paddingVertical: 14,
-    paddingHorizontal: 32,
-    borderRadius: 12,
-    width: '100%',
-  },
-  buttonText: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: '600',
-  },
+  optionsContainer: {
+    marginBottom: 20,
+  }
 });

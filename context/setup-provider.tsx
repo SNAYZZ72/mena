@@ -73,17 +73,19 @@ export const SetupProvider: React.FC<SetupProviderProps> = ({
   const progress = (currentStep / totalSteps) * 100;
 
   // Check if user exists and try to load their profile
+  // Check if user exists and try to load their profile
   useEffect(() => {
     const loadProfile = async () => {
       if (!user) return;
       
       try {
         setIsLoading(true);
+        // Use maybeSingle() instead of single() to handle case where no profile exists yet
         const { data, error } = await supabase
           .from('hair_profiles')
           .select('*')
           .eq('user_id', user.id)
-          .single();
+          .maybeSingle();
           
         if (error) {
           console.error('Error loading profile:', error);
@@ -91,8 +93,21 @@ export const SetupProvider: React.FC<SetupProviderProps> = ({
         }
         
         if (data) {
-          setHairProfile(data);
+          // Convert snake_case database columns to camelCase for our app
+          setHairProfile({
+            gender: data.gender,
+            hairType: data.hair_type,
+            hairLength: data.hair_length,
+            hairDensity: data.hair_density,
+            hairTexture: data.hair_texture,
+            scalpCondition: data.scalp_condition,
+            hairConcerns: data.hair_concerns,
+            hairGoals: data.hair_goals,
+            routinePreference: data.routine_preference,
+            productPreference: data.product_preference,
+          });
         }
+        // If no data, that's fine - we'll create a new profile
       } catch (error) {
         console.error('Error:', error);
       } finally {
@@ -133,6 +148,7 @@ export const SetupProvider: React.FC<SetupProviderProps> = ({
   };
 
   // Save the complete profile to Supabase
+  // Save the complete profile to Supabase
   const saveProfile = async () => {
     if (!user) {
       console.error('No user logged in');
@@ -142,13 +158,27 @@ export const SetupProvider: React.FC<SetupProviderProps> = ({
     try {
       setIsLoading(true);
       
+      // Convert camelCase keys to snake_case for the database
+      const profileData = {
+        user_id: user.id,
+        gender: hairProfile.gender,
+        hair_type: hairProfile.hairType,
+        hair_length: hairProfile.hairLength,
+        hair_density: hairProfile.hairDensity,
+        hair_texture: hairProfile.hairTexture,
+        scalp_condition: hairProfile.scalpCondition,
+        hair_concerns: hairProfile.hairConcerns,
+        hair_goals: hairProfile.hairGoals,
+        routine_preference: hairProfile.routinePreference,
+        product_preference: hairProfile.productPreference,
+        updated_at: new Date(),
+      };
+      
+      console.log('Saving profile data:', profileData);
+      
       const { error } = await supabase
         .from('hair_profiles')
-        .upsert({
-          user_id: user.id,
-          ...hairProfile,
-          updated_at: new Date(),
-        });
+        .upsert(profileData);
 
       if (error) {
         console.error('Error saving profile:', error);

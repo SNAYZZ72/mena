@@ -98,6 +98,16 @@ export default function AppLayout() {
           }}
         />
         
+        {/* Setup screens */}
+        <Stack.Screen
+          name="setup"
+          options={{
+            headerShown: false,
+            gestureEnabled: false,
+            animation: 'fade',
+          }}
+        />
+        
         <Stack.Screen
           name="modal"
           options={{
