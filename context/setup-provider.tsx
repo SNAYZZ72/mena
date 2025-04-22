@@ -1,78 +1,49 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useRouter } from 'expo-router';
-import { supabase } from '@/config/supabase';
 import { useSupabase } from './supabase-provider';
-
-// Define the user hair profile type
-export type HairProfile = {
-  gender?: string;
-  hairType?: string;
-  hairLength?: string;
-  hairDensity?: string;
-  hairTexture?: string;
-  scalpCondition?: string;
-  hairConcerns?: string[];
-  hairGoals?: string[];
-  routinePreference?: string;
-  productPreference?: string;
-};
-
-// Define the context type
-type SetupContextType = {
-  currentStep: number;
-  totalSteps: number;
-  hairProfile: HairProfile;
-  isLoading: boolean;
-  updateProfile: (key: keyof HairProfile, value: any) => void;
-  nextStep: () => void;
-  previousStep: () => void;
-  goToStep: (step: number) => void;
-  saveProfile: () => Promise<void>;
-  progress: number;
-};
+import { 
+  HairProfile, 
+  HairProfileContextType,
+  HairProfileProviderProps
+} from '@/types/profile';
+import { getHairProfile, saveHairProfile } from '@/services/api';
+import { getUserFriendlyErrorMessage } from '@/utils/error-handler';
 
 // Create the context with default values
-const SetupContext = createContext<SetupContextType>({
-  currentStep: 1,
-  totalSteps: 7,
-  hairProfile: {},
+const SetupContext = createContext<HairProfileContextType>({
+  profile: null,
   isLoading: false,
   updateProfile: () => {},
-  nextStep: () => {},
-  previousStep: () => {},
-  goToStep: () => {},
   saveProfile: async () => {},
-  progress: 0,
+  resetProfile: () => {},
+  isComplete: false,
 });
 
 // Custom hook to use the setup context
 export const useSetup = () => useContext(SetupContext);
 
-// Props for the provider component
-type SetupProviderProps = {
-  children: React.ReactNode;
-  initialStep?: number;
-  onComplete?: () => void;
-};
-
-export const SetupProvider: React.FC<SetupProviderProps> = ({
-  children,
-  initialStep = 1,
-  onComplete,
+export const SetupProvider: React.FC<HairProfileProviderProps> = ({
+  children
 }) => {
   const { user } = useSupabase();
   const router = useRouter();
-  const [currentStep, setCurrentStep] = useState(initialStep);
-  const [hairProfile, setHairProfile] = useState<HairProfile>({});
+  const [profile, setProfile] = useState<HairProfile | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   
-  // Define the total number of steps in the setup process
-  const totalSteps = 7;
-  
-  // Calculate progress percentage
-  const progress = (currentStep / totalSteps) * 100;
+  // Check if profile has all required fields
+  const isComplete = Boolean(
+    profile?.hair_type &&
+    profile?.hair_length &&
+    profile?.hair_goals?.length &&
+    profile?.hair_texture &&
+    profile?.hair_porosity &&
+    profile?.hair_density &&
+    profile?.scalp_condition &&
+    profile?.hair_concerns?.length &&
+    profile?.age != null
+  );
 
-  // Check if user exists and try to load their profile
   // Check if user exists and try to load their profile
   useEffect(() => {
     const loadProfile = async () => {
@@ -80,36 +51,33 @@ export const SetupProvider: React.FC<SetupProviderProps> = ({
       
       try {
         setIsLoading(true);
-        // Use maybeSingle() instead of single() to handle case where no profile exists yet
-        const { data, error } = await supabase
-          .from('hair_profiles')
-          .select('*')
-          .eq('user_id', user.id)
-          .maybeSingle();
+        setError(null);
+        
+        const response = await getHairProfile(user.id);
           
-        if (error) {
-          console.error('Error loading profile:', error);
-          return;
+        if (response.error) {
+          throw response.error;
         }
         
-        if (data) {
-          // Convert snake_case database columns to camelCase for our app
-          setHairProfile({
-            gender: data.gender,
-            hairType: data.hair_type,
-            hairLength: data.hair_length,
-            hairDensity: data.hair_density,
-            hairTexture: data.hair_texture,
-            scalpCondition: data.scalp_condition,
-            hairConcerns: data.hair_concerns,
-            hairGoals: data.hair_goals,
-            routinePreference: data.routine_preference,
-            productPreference: data.product_preference,
+        if (response.data) {
+          setProfile(response.data);
+        } else {
+          // Initialize a new profile with user_id
+          setProfile({
+            user_id: user.id,
+            hair_type: 'straight',
+            hair_length: 'medium',
+            hair_goals: [],
+            hair_texture: 'medium',
+            hair_porosity: 'medium',
+            hair_density: 'medium',
+            scalp_condition: 'normal',
+            hair_concerns: ['none'],
           });
         }
-        // If no data, that's fine - we'll create a new profile
       } catch (error) {
         console.error('Error:', error);
+        setError(getUserFriendlyErrorMessage(error));
       } finally {
         setIsLoading(false);
       }
@@ -119,97 +87,70 @@ export const SetupProvider: React.FC<SetupProviderProps> = ({
   }, [user]);
 
   // Update a specific field in the profile
-  const updateProfile = (key: keyof HairProfile, value: any) => {
-    setHairProfile(prev => ({
-      ...prev,
-      [key]: value,
-    }));
+  const updateProfile = (key: keyof HairProfile, value: HairProfile[keyof HairProfile]) => {
+    if (!profile) return;
+    
+    setProfile(prev => {
+      if (!prev) return null;
+      return {
+        ...prev,
+        [key]: value,
+      };
+    });
   };
 
-  // Navigation functions
-  const nextStep = () => {
-    if (currentStep < totalSteps) {
-      setCurrentStep(prev => prev + 1);
-    } else {
-      saveProfile();
-    }
+  // Reset the profile to initial state
+  const resetProfile = () => {
+    if (!user) return;
+    
+    setProfile({
+      user_id: user.id,
+      hair_type: 'straight',
+      hair_length: 'medium',
+      hair_goals: [],
+      hair_texture: 'medium',
+      hair_porosity: 'medium',
+      hair_density: 'medium',
+      scalp_condition: 'normal',
+      hair_concerns: ['none'],
+    });
   };
 
-  const previousStep = () => {
-    if (currentStep > 1) {
-      setCurrentStep(prev => prev - 1);
-    }
-  };
-
-  const goToStep = (step: number) => {
-    if (step >= 1 && step <= totalSteps) {
-      setCurrentStep(step);
-    }
-  };
-
-  // Save the complete profile to Supabase
-  // Save the complete profile to Supabase
-  const saveProfile = async () => {
-    if (!user) {
-      console.error('No user logged in');
+  // Save the profile to Supabase
+  const saveProfile = async (): Promise<void> => {
+    if (!user || !profile) {
+      console.error('No user logged in or profile not initialized');
       return;
     }
 
     try {
       setIsLoading(true);
+      setError(null);
       
-      // Convert camelCase keys to snake_case for the database
-      const profileData = {
-        user_id: user.id,
-        gender: hairProfile.gender,
-        hair_type: hairProfile.hairType,
-        hair_length: hairProfile.hairLength,
-        hair_density: hairProfile.hairDensity,
-        hair_texture: hairProfile.hairTexture,
-        scalp_condition: hairProfile.scalpCondition,
-        hair_concerns: hairProfile.hairConcerns,
-        hair_goals: hairProfile.hairGoals,
-        routine_preference: hairProfile.routinePreference,
-        product_preference: hairProfile.productPreference,
-        updated_at: new Date(),
-      };
-      
-      console.log('Saving profile data:', profileData);
-      
-      const { error } = await supabase
-        .from('hair_profiles')
-        .upsert(profileData);
+      const response = await saveHairProfile(profile);
 
-      if (error) {
-        console.error('Error saving profile:', error);
-        return;
+      if (response.error) {
+        throw response.error;
       }
 
-      if (onComplete) {
-        onComplete();
-      } else {
-        // Default navigation to the home screen after setup
-        router.replace({ pathname: '/(app)/(protected)' });
-      }
+      // Navigate to the home screen after successful save
+      router.replace('/');
     } catch (error) {
       console.error('Error:', error);
+      setError(getUserFriendlyErrorMessage(error));
     } finally {
       setIsLoading(false);
     }
   };
 
   // Create the context value
-  const contextValue: SetupContextType = {
-    currentStep,
-    totalSteps,
-    hairProfile,
+  const contextValue: HairProfileContextType = {
+    profile,
     isLoading,
     updateProfile,
-    nextStep,
-    previousStep,
-    goToStep,
     saveProfile,
-    progress,
+    resetProfile,
+    isComplete,
   };
 
   return (

@@ -1,16 +1,17 @@
-import React, { useEffect } from 'react';
-import { StyleSheet, View, Image } from 'react-native';
+import React from 'react';
+import { View, Image, ImageBackground, StatusBar } from 'react-native';
 import { useRouter } from 'expo-router';
-import Animated, { FadeIn } from 'react-native-reanimated';
+import Animated, { FadeIn, FadeInUp } from 'react-native-reanimated';
+import { LinearGradient } from 'expo-linear-gradient';
+import { Feather } from '@expo/vector-icons';
 
-import { useSetup } from '@/context/setup-provider';
 import { Text } from '@/components/ui/text';
 import { Button } from '@/components/ui/button';
 import { SafeAreaView } from '@/components/safe-area-view';
+import { Body, H1 } from '@/components/ui/typography';
 
 export default function SetupIndexScreen() {
   const router = useRouter();
-  const { progress, goToStep } = useSetup();
 
   // Start the setup process
   const handleStart = () => {
@@ -18,113 +19,87 @@ export default function SetupIndexScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-      <Animated.View 
-        entering={FadeIn.duration(800)}
-        style={styles.content}
+    <ImageBackground
+      source={require('@/assets/setup-bg.png')}
+      style={{ flex: 1 }}
+      resizeMode="cover"
+    >
+      <StatusBar translucent backgroundColor="transparent" barStyle="light-content" />
+      <LinearGradient
+        colors={['rgba(34, 34, 34, 0.3)', 'rgba(34, 34, 34, 0.9)']}
+        style={{ flex: 1 }}
       >
-        <View style={styles.imageContainer}>
-          <Image
-            source={require('@/assets/icon.png')}
-            style={styles.image}
-            resizeMode="contain"
-          />
-        </View>
-        
-        <View style={styles.textContainer}>
-          <Text style={styles.title}>Let's Set Up Your Hair Profile</Text>
-          <Text style={styles.description}>
-            Answer a few questions to help us customize your hair care experience.
-            This will help us recommend the best routines and products for your unique hair.
-          </Text>
-        </View>
-        
-        <View style={styles.inspirationalContainer}>
-          <Text style={styles.inspirationalTitle}>
-            Healthy Hair Is A Journey
-          </Text>
-          <Text style={styles.inspirationalText}>
-            Your personalized hair care journey starts now. Don't give up!
-          </Text>
-        </View>
-        
-        <Button 
-          style={styles.button}
-          onPress={handleStart}
-        >
-          <Text style={styles.buttonText}>Start Setup</Text>
-        </Button>
-      </Animated.View>
-    </SafeAreaView>
+        <SafeAreaView className="flex-1">
+          <Animated.View 
+            entering={FadeIn.duration(800)}
+            className="flex-1 px-6 justify-center"
+          >
+            <View className="items-center mb-8">
+              <Animated.View 
+                entering={FadeInUp.duration(1000)}
+                className="mb-8 rounded-full bg-white/15 p-6 shadow-lg"
+              >
+                <Image
+                  source={require('@/assets/icon.png')}
+                  className="w-[130px] h-[130px] rounded-3xl"
+                  resizeMode="contain"
+                />
+              </Animated.View>
+              
+              <Animated.View 
+                entering={FadeInUp.delay(200).duration(1000)}
+                className="items-center mb-8"
+              >
+                <H1 className="text-white text-4xl font-bold mb-4 text-center">
+                  Your Hair Journey Begins Here
+                </H1>
+                
+                <Body className="text-gray-200 text-center leading-6 px-4">
+                  Answer a few questions to discover your perfect hair care routine
+                  tailored to your unique hair profile.
+                </Body>
+              </Animated.View>
+            </View>
+            
+            <Animated.View 
+              entering={FadeInUp.delay(400).duration(1000)}
+              className="mb-10 w-full"
+            >
+              <View className="bg-primary/20 backdrop-blur-lg border border-primary/30 rounded-2xl p-6 shadow-md">
+                <View className="items-center mb-2">
+                  <Feather name="award" size={28} color="#AA8AD2" />
+                </View>
+                <Text className="text-white text-xl font-bold mb-2 text-center">
+                  Expert Hair Care Awaits
+                </Text>
+                <Text className="text-gray-200 text-center">
+                  Join thousands of people who have transformed their hair with our personalized recommendations.
+                </Text>
+              </View>
+            </Animated.View>
+            
+            <Animated.View 
+              entering={FadeInUp.delay(600).duration(1000)}
+              className="w-full items-center"
+            >
+              <Button 
+                variant="primary"
+                size="lg"
+                fullWidth
+                icon="arrow-right"
+                onPress={handleStart}
+                className="h-14 rounded-xl shadow-lg shadow-primary/40"
+              >
+                Create Your Hair Profile
+              </Button>
+              
+              <Text className="text-gray-400 mt-4 text-center text-xs">
+                Takes less than 2 minutes
+              </Text>
+            </Animated.View>
+          </Animated.View>
+        </SafeAreaView>
+      </LinearGradient>
+    </ImageBackground>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#222222',
-  },
-  content: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 24,
-  },
-  imageContainer: {
-    marginBottom: 32,
-  },
-  image: {
-    width: 120,
-    height: 120,
-    borderRadius: 20,
-  },
-  textContainer: {
-    alignItems: 'center',
-    marginBottom: 40,
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#FFFFFF',
-    marginBottom: 16,
-    textAlign: 'center',
-  },
-  description: {
-    fontSize: 16,
-    color: '#CCCCCC',
-    textAlign: 'center',
-    lineHeight: 24,
-  },
-  inspirationalContainer: {
-    backgroundColor: '#AA8AD2',
-    paddingVertical: 20,
-    paddingHorizontal: 24,
-    borderRadius: 12,
-    marginBottom: 40,
-    width: '100%',
-  },
-  inspirationalTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#FFFFFF',
-    marginBottom: 8,
-    textAlign: 'center',
-  },
-  inspirationalText: {
-    fontSize: 14,
-    color: '#FFFFFF',
-    textAlign: 'center',
-  },
-  button: {
-    backgroundColor: '#AA8AD2',
-    paddingVertical: 14,
-    paddingHorizontal: 32,
-    borderRadius: 12,
-    width: '100%',
-  },
-  buttonText: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-});

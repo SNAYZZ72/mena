@@ -13,6 +13,7 @@ CREATE TABLE IF NOT EXISTS public.hair_profiles (
   scalp_condition TEXT,
   hair_concerns TEXT[],
   hair_goals TEXT[],
+  age INTEGER,
   routine_preference TEXT,
   product_preference TEXT,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
@@ -59,3 +60,8 @@ COMMENT ON TABLE public.hair_profiles IS 'User hair profiles for personalization
 
 -- Grant access to authenticated users
 GRANT ALL ON public.hair_profiles TO authenticated;
+
+
+ALTER TABLE public.hair_profiles
+ADD COLUMN hair_porosity TEXT NOT NULL
+  DEFAULT 'medium';

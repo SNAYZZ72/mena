@@ -1,37 +1,68 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import { View, StyleSheet, ScrollView, TouchableOpacity, Image, ImageBackground, StatusBar } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Feather } from '@expo/vector-icons';
-import Animated from 'react-native-reanimated';
+import Animated, { FadeIn, FadeInUp } from 'react-native-reanimated';
+import { LinearGradient } from 'expo-linear-gradient';
 
 import { useSetup } from '@/context/setup-provider';
 import { GridOption } from '@/components/ui/setup-components';
 import { SafeAreaView } from '@/components/safe-area-view';
 import { Text } from '@/components/ui/text';
-import { H1 } from '@/components/ui/typography';
+import { H1, Body } from '@/components/ui/typography';
 
 // Hair type options
 const hairTypeOptions = [
-  { id: '1', label: 'Straight', value: 'straight', icon: 'align-center' },
-  { id: '2', label: 'Wavy', value: 'wavy', icon: 'trending-up' },
-  { id: '3', label: 'Curly', value: 'curly', icon: 'refresh-cw' },
-  { id: '4', label: 'Coily/Kinky', value: 'coily', icon: 'rotate-cw' },
-  { id: '5', label: 'Not Sure', value: 'not_sure', icon: 'help-circle' }
+  { 
+    id: '1', 
+    label: 'Straight', 
+    value: 'straight', 
+    icon: 'align-center',
+    description: 'Hair that falls flat from roots to ends'
+  },
+  { 
+    id: '2', 
+    label: 'Wavy', 
+    value: 'wavy', 
+    icon: 'trending-up',
+    description: 'Hair with gentle S-shaped waves'
+  },
+  { 
+    id: '3', 
+    label: 'Curly', 
+    value: 'curly', 
+    icon: 'refresh-cw',
+    description: 'Hair with defined spiral or ringlet patterns'
+  },
+  { 
+    id: '4', 
+    label: 'Coily/Kinky', 
+    value: 'coily', 
+    icon: 'rotate-cw',
+    description: 'Hair with tight curls or zig-zag patterns'
+  },
+  { 
+    id: '5', 
+    label: 'Not Sure', 
+    value: 'not_sure', 
+    icon: 'help-circle',
+    description: 'We\'ll help you determine your type later'
+  }
 ];
 
 export default function HairTypeScreen() {
   const router = useRouter();
-  const { hairProfile, updateProfile, progress, currentStep, nextStep } = useSetup();
-  const [selectedType, setSelectedType] = useState<string | undefined>(hairProfile.hairType);
+  const { profile, updateProfile } = useSetup();
+  const [selectedType, setSelectedType] = useState<string | undefined>(profile?.hair_type);
 
+  // For progress indication (estimate 20% complete at this step)
+  const progress = 20;
 
   // Handle selection and immediate navigation
   const handleSelect = (value: string) => {
     setSelectedType(value);
     // Save and navigate immediately
-    updateProfile('hairType', value);
-    // Increment the step counter before navigating
-    nextStep();
+    updateProfile('hair_type', value);
     console.log('Hair type selected:', value, '- navigating to next screen');
     router.push('/(app)/setup/hair-concerns');
   };
@@ -42,66 +73,120 @@ export default function HairTypeScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.screenContainer}>
-        {/* Progress Bar */}
-        <View style={styles.progressContainer}>
-          <View style={styles.progressBackground}>
-            <Animated.View 
-              style={[
-                styles.progressFill, 
-                { width: `${progress}%` }
-              ]}
-            />
-          </View>
-        </View>
-        
-        {/* Header */}
-        <View style={styles.header}>
-          <TouchableOpacity onPress={handleBack} style={styles.backButton}>
-            <Feather name="chevron-left" size={24} color="#FFFFFF" />
-            <Text style={styles.backText}>Back</Text>
-          </TouchableOpacity>
-        </View>
-        
-        {/* Content */}
-        <ScrollView 
-          style={styles.scrollView} 
-          contentContainerStyle={styles.contentContainer}
-          showsVerticalScrollIndicator={false}
-        >
-          <View style={styles.titleContainer}>
-            <H1 style={styles.title}>What's Your Hair Type?</H1>
-            <Text style={styles.subtitle}>Select the option that best describes your natural hair</Text>
-          </View>
-          
-          <View style={styles.gridContainer}>
-            {hairTypeOptions.map((option) => (
-              <View key={option.id} style={styles.gridItem}>
-                <GridOption
-                  option={option}
-                  isSelected={selectedType === option.value}
-                  onSelect={handleSelect}
+    <ImageBackground
+      source={require('@/assets/setup-bg.png')}
+      style={{ flex: 1 }}
+      resizeMode="cover"
+    >
+      <StatusBar translucent backgroundColor="transparent" barStyle="light-content" />
+      <LinearGradient
+        colors={['rgba(34, 34, 34, 0.3)', 'rgba(34, 34, 34, 0.9)']}
+        style={{ flex: 1 }}
+      >
+        <SafeAreaView style={styles.container}>
+          <View style={styles.screenContainer}>
+            {/* Progress Bar */}
+            <View style={styles.progressContainer}>
+              <View style={styles.progressBackground}>
+                <Animated.View 
+                  style={[
+                    styles.progressFill, 
+                    { width: `${progress}%` }
+                  ]}
                 />
               </View>
-            ))}
+            </View>
+            
+            {/* Header */}
+            <View style={styles.header}>
+              <TouchableOpacity onPress={handleBack} style={styles.backButton}>
+                <Feather name="chevron-left" size={24} color="#FFFFFF" />
+                <Text style={styles.backText}>Back</Text>
+              </TouchableOpacity>
+            </View>
+            
+            {/* Content */}
+            <ScrollView 
+              style={styles.scrollView} 
+              contentContainerStyle={styles.contentContainer}
+              showsVerticalScrollIndicator={false}
+            >
+              <Animated.View 
+                entering={FadeInUp.duration(800)}
+                style={styles.titleContainer}
+              >
+                <H1 style={styles.title}>What's Your Hair Type?</H1>
+                <Text style={styles.subtitle}>
+                  Select the option that best describes your natural hair pattern
+                </Text>
+              </Animated.View>
+              
+              <Animated.View 
+                entering={FadeInUp.delay(200).duration(800)}
+                style={styles.gridContainer}
+              >
+                {hairTypeOptions.map((option, index) => (
+                  <Animated.View 
+                    key={option.id} 
+                    style={styles.gridItem}
+                    entering={FadeInUp.delay(300 + (index * 100)).duration(800)}
+                  >
+                    <TouchableOpacity
+                      style={[
+                        styles.optionCard,
+                        selectedType === option.value && styles.selectedCard
+                      ]}
+                      onPress={() => handleSelect(option.value)}
+                      activeOpacity={0.7}
+                    >
+                      <View style={[
+                        styles.iconContainer,
+                        selectedType === option.value && styles.selectedIconContainer
+                      ]}>
+                        <Feather 
+                          name={option.icon as any} 
+                          size={32} 
+                          color={selectedType === option.value ? "#FFFFFF" : "#AA8AD2"} 
+                        />
+                      </View>
+                      <View style={styles.textContainer}>
+                        <Text style={[
+                          styles.optionLabel,
+                          selectedType === option.value && styles.selectedLabel
+                        ]}>
+                          {option.label}
+                        </Text>
+                        <Text style={styles.optionDescription}>
+                          {option.description}
+                        </Text>
+                      </View>
+                    </TouchableOpacity>
+                  </Animated.View>
+                ))}
+              </Animated.View>
+              
+              <Animated.View 
+                entering={FadeInUp.delay(800).duration(800)}
+                style={styles.helpContainer}
+              >
+                <View style={styles.iconInfoContainer}>
+                  <Feather name="info" size={18} color="#AA8AD2" />
+                </View>
+                <Text style={styles.helpText}>
+                  Your hair type influences which products and routines will work best for you.
+                </Text>
+              </Animated.View>
+            </ScrollView>
           </View>
-          
-          <View style={styles.helpContainer}>
-            <Text style={styles.helpText}>
-              Not sure about your hair type? Select "Not Sure" and we'll help you figure it out later!
-            </Text>
-          </View>
-        </ScrollView>
-      </View>
-    </SafeAreaView>
+        </SafeAreaView>
+      </LinearGradient>
+    </ImageBackground>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#222222',
   },
   screenContainer: {
     flex: 1,
@@ -111,15 +196,15 @@ const styles = StyleSheet.create({
     paddingTop: 16,
   },
   progressBackground: {
-    height: 6,
+    height: 8,
     backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    borderRadius: 3,
+    borderRadius: 4,
     overflow: 'hidden',
   },
   progressFill: {
     height: '100%',
     backgroundColor: '#AA8AD2',
-    borderRadius: 3,
+    borderRadius: 4,
   },
   header: {
     paddingHorizontal: 20,
@@ -132,8 +217,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   backText: {
-    color: '#FFFF00',
+    color: '#FFFFFF',
     marginLeft: 4,
+    fontWeight: '500',
   },
   scrollView: {
     flex: 1,
@@ -148,35 +234,83 @@ const styles = StyleSheet.create({
   },
   title: {
     color: '#FFFFFF',
-    fontSize: 28,
+    fontSize: 32,
     fontWeight: 'bold',
     marginBottom: 12,
   },
   subtitle: {
-    color: '#CCCCCC',
+    color: '#E0E0E0',
     fontSize: 16,
     lineHeight: 24,
   },
   gridContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    marginHorizontal: -6,
+    flexDirection: 'column',
     marginBottom: 20,
   },
   gridItem: {
-    width: '50%',
-    padding: 6,
+    width: '100%',
+    marginBottom: 12,
   },
-  helpContainer: {
+  optionCard: {
     backgroundColor: 'rgba(255, 255, 255, 0.1)',
-    padding: 12,
-    borderRadius: 8,
-    marginTop: 10,
-    marginBottom: 30,
+    borderRadius: 16,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.15)',
+    flexDirection: 'row',
+    alignItems: 'center',
   },
-  helpText: {
+  selectedCard: {
+    backgroundColor: 'rgba(170, 138, 210, 0.2)',
+    borderColor: '#AA8AD2',
+  },
+  iconContainer: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 16,
+  },
+  selectedIconContainer: {
+    backgroundColor: '#AA8AD2',
+  },
+  textContainer: {
+    flex: 1,
+  },
+  optionLabel: {
+    color: '#FFFFFF',
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 4,
+  },
+  selectedLabel: {
+    color: '#AA8AD2',
+  },
+  optionDescription: {
     color: '#CCCCCC',
     fontSize: 14,
-    textAlign: 'center',
+    flexWrap: 'wrap',
+  },
+  helpContainer: {
+    backgroundColor: 'rgba(170, 138, 210, 0.1)',
+    padding: 16,
+    borderRadius: 16,
+    marginTop: 10,
+    marginBottom: 30,
+    flexDirection: 'row',
+    borderWidth: 1,
+    borderColor: 'rgba(170, 138, 210, 0.3)',
+  },
+  iconInfoContainer: {
+    marginRight: 12,
+    marginTop: 2,
+  },
+  helpText: {
+    color: '#E0E0E0',
+    fontSize: 14,
+    flex: 1,
+    lineHeight: 20,
   }
 });

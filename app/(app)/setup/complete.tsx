@@ -1,18 +1,25 @@
-import React from 'react';
-import { View, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import React, { useMemo } from 'react';
+import { View, TouchableOpacity, ScrollView, ImageBackground, StatusBar } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Feather } from '@expo/vector-icons';
-import Animated, { FadeIn, FadeInDown } from 'react-native-reanimated';
+import Animated, { FadeIn, FadeInDown, FadeInUp } from 'react-native-reanimated';
+import { LinearGradient } from 'expo-linear-gradient';
+import { BlurView } from 'expo-blur';
 
 import { useSetup } from '@/context/setup-provider';
 import { SafeAreaView } from '@/components/safe-area-view';
 import { Text } from '@/components/ui/text';
-import { H1 } from '@/components/ui/typography';
+import { H1, Body } from '@/components/ui/typography';
 import { Button } from '@/components/ui/button';
 
 export default function CompleteScreen() {
   const router = useRouter();
-  const { hairProfile, saveProfile, isLoading, progress } = useSetup();
+  const { profile, saveProfile, isLoading } = useSetup();
+  
+  // Calculate progress percentage - since this is the complete screen, we set it to 100%
+  const progress = useMemo(() => {
+    return 100; // At the complete screen, progress is 100%
+  }, []);
 
   // Handle finish button press
   const handleFinish = async () => {
@@ -27,265 +34,197 @@ export default function CompleteScreen() {
 
   // Summarize selected preferences in a user-friendly way
   const getHairTypeLabel = () => {
-    switch (hairProfile.hairType) {
+    if (!profile?.hair_type) return 'Not specified';
+    
+    switch (profile?.hair_type) {
       case 'straight': return 'Straight';
       case 'wavy': return 'Wavy';
       case 'curly': return 'Curly';
       case 'coily': return 'Coily/Kinky';
-      case 'not_sure': return 'To be determined';
       default: return 'Not specified';
     }
   };
 
-  const getRoutineLabel = () => {
-    switch (hairProfile.routinePreference) {
-      case 'quick': return 'Quick & Simple';
-      case 'balanced': return 'Balanced';
-      case 'thorough': return 'Thorough';
-      case 'intensive': return 'Intensive';
-      default: return 'Not specified';
-    }
+  const getHairGoals = () => {
+    if (!profile?.hair_goals || profile.hair_goals.length === 0) return 'None specified';
+    
+    return profile.hair_goals.map((goal: string) => 
+      goal.charAt(0).toUpperCase() + goal.slice(1).replace('_', ' ')
+    ).join(', ');
+  };
+
+  const getHairConcerns = () => {
+    if (!profile?.hair_concerns || profile.hair_concerns.length === 0) return 'None specified';
+    
+    return profile.hair_concerns.map((concern: string) => 
+      concern === 'none' ? 'None' : concern.charAt(0).toUpperCase() + concern.slice(1).replace('_', ' ')
+    ).join(', ');
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.screenContainer}>
-        {/* Progress Bar */}
-        <View style={styles.progressContainer}>
-          <View style={styles.progressBackground}>
-            <Animated.View 
-              style={[
-                styles.progressFill, 
-                { width: `${progress}%` }
-              ]}
-            />
-          </View>
-        </View>
-        
-        {/* Header */}
-        <View style={styles.header}>
-          <TouchableOpacity onPress={handleBack} style={styles.backButton}>
-            <Feather name="chevron-left" size={24} color="#FFFFFF" />
-            <Text style={styles.backText}>Back</Text>
-          </TouchableOpacity>
-        </View>
-        
-        {/* Content */}
-        <ScrollView 
-          style={styles.scrollView} 
-          contentContainerStyle={styles.contentContainer}
-          showsVerticalScrollIndicator={false}
-        >
-          <Animated.View 
-            entering={FadeIn.duration(800)}
-            style={styles.titleContainer}
-          >
-            <View style={styles.checkmarkContainer}>
-              <Feather name="check-circle" size={60} color="#4CAF50" />
-            </View>
-            <H1 style={styles.title}>Profile Complete!</H1>
-            <Text style={styles.subtitle}>
-              We've created your personalized hair profile. Here's a summary of your information.
-            </Text>
-          </Animated.View>
-          
-          <Animated.View 
-            entering={FadeInDown.delay(400).duration(800)}
-            style={styles.summaryContainer}
-          >
-            <Text style={styles.summaryTitle}>Your Hair Profile</Text>
-            
-            <View style={styles.summaryItem}>
-              <Text style={styles.summaryLabel}>Hair Type:</Text>
-              <Text style={styles.summaryValue}>{getHairTypeLabel()}</Text>
+    <ImageBackground
+      source={require('@/assets/complete-bg.png')}
+      style={{ flex: 1 }}
+      resizeMode="cover"
+    >
+      <StatusBar translucent backgroundColor="transparent" barStyle="light-content" />
+      <LinearGradient
+        colors={['rgba(34, 34, 34, 0.2)', 'rgba(34, 34, 34, 0.92)']}
+        style={{ flex: 1 }}
+      >
+        <SafeAreaView className="flex-1">
+          <View className="flex-1">
+            {/* Progress Bar */}
+            <View className="px-5 pt-4">
+              <View className="h-2 bg-white/20 rounded-full overflow-hidden">
+                <Animated.View 
+                  className="h-full bg-primary rounded-full"
+                  style={{ width: `${progress}%` }}
+                />
+              </View>
             </View>
             
-            <View style={styles.summaryItem}>
-              <Text style={styles.summaryLabel}>Top Concerns:</Text>
-              <Text style={styles.summaryValue}>
-                {hairProfile.hairConcerns && hairProfile.hairConcerns.length > 0 
-                  ? hairProfile.hairConcerns.slice(0, 2).map((concern: string) => 
-                      concern.charAt(0).toUpperCase() + concern.slice(1).replace('_', ' ')
-                    ).join(', ')
-                  : 'None specified'}
-              </Text>
+            {/* Header */}
+            <View className="px-5 pt-4 flex-row items-center">
+              <TouchableOpacity 
+                onPress={handleBack} 
+                className="flex-row items-center"
+              >
+                <Feather name="chevron-left" size={24} color="#FFFFFF" />
+                <Text className="text-white ml-1">Back</Text>
+              </TouchableOpacity>
             </View>
             
-            <View style={styles.summaryItem}>
-              <Text style={styles.summaryLabel}>Main Goals:</Text>
-              <Text style={styles.summaryValue}>
-                {hairProfile.hairGoals && hairProfile.hairGoals.length > 0 
-                  ? hairProfile.hairGoals.slice(0, 2).map((goal: string) => 
-                      goal.charAt(0).toUpperCase() + goal.slice(1).replace('_', ' ')
-                    ).join(', ')
-                  : 'None specified'}
-              </Text>
-            </View>
-            
-            <View style={styles.summaryItem}>
-              <Text style={styles.summaryLabel}>Routine Preference:</Text>
-              <Text style={styles.summaryValue}>{getRoutineLabel()}</Text>
-            </View>
-          </Animated.View>
-          
-          <Animated.View 
-            entering={FadeInDown.delay(800).duration(800)}
-            style={styles.inspirationalContainer}
-          >
-            <Text style={styles.inspirationalTitle}>
-              Consistency Is The Key To Progress
-            </Text>
-            <Text style={styles.inspirationalText}>
-              Your personalized hair care journey starts now. Don't give up!
-            </Text>
-          </Animated.View>
-          
-          <Animated.View 
-            entering={FadeInDown.delay(1200).duration(800)}
-            style={styles.buttonContainer}
-          >
-            <Button 
-              style={styles.button}
-              onPress={handleFinish}
-              disabled={isLoading}
+            {/* Content */}
+            <ScrollView 
+              className="flex-1"
+              contentContainerClassName="px-6 pb-10"
+              showsVerticalScrollIndicator={false}
             >
-              <Text style={styles.buttonText}>Start My Journey</Text>
-            </Button>
-          </Animated.View>
-        </ScrollView>
-      </View>
-    </SafeAreaView>
+              <Animated.View 
+                entering={FadeInUp.duration(800)}
+                className="items-center mt-8 mb-10"
+              >
+                <View className="w-24 h-24 rounded-full bg-gradient-to-br from-green-400 to-green-600 items-center justify-center mb-8 shadow-lg shadow-green-500/30">
+                  <Feather name="check" size={56} color="#FFFFFF" />
+                </View>
+                <H1 className="text-white text-4xl font-bold mb-3 text-center">
+                  Your Hair Profile is Ready!
+                </H1>
+                <Body className="text-gray-200 text-center px-4">
+                  We've created your personalized hair care plan based on your unique profile.
+                </Body>
+              </Animated.View>
+              
+              <Animated.View 
+                entering={FadeInDown.delay(400).duration(800)}
+                className="mb-8"
+              >
+                <BlurView intensity={30} tint="dark" className="overflow-hidden rounded-2xl border border-white/20">
+                  <View className="bg-white/10 p-6">
+                    <View className="flex-row items-center mb-5">
+                      <Feather name="user" size={20} color="#AA8AD2" style={{ marginRight: 8 }} />
+                      <Text className="text-primary font-bold text-xl">
+                        Your Hair Profile
+                      </Text>
+                    </View>
+                    
+                    <View className="mb-5 border-b border-white/15 pb-4">
+                      <Text className="text-gray-400 mb-2 text-sm">Hair Type</Text>
+                      <View className="flex-row items-center">
+                        <Feather name={profile?.hair_type === 'straight' ? 'align-center' : 
+                                  profile?.hair_type === 'wavy' ? 'trending-up' : 
+                                  profile?.hair_type === 'curly' ? 'refresh-cw' : 'rotate-cw'} 
+                                  size={16} color="#FFFFFF" style={{ marginRight: 8 }} />
+                        <Text className="text-white text-lg font-medium">{getHairTypeLabel()}</Text>
+                      </View>
+                    </View>
+                    
+                    <View className="mb-5 border-b border-white/15 pb-4">
+                      <Text className="text-gray-400 mb-2 text-sm">Age</Text>
+                      <View className="flex-row items-center">
+                        <Feather name="calendar" size={16} color="#FFFFFF" style={{ marginRight: 8 }} />
+                        <Text className="text-white text-lg font-medium">{profile?.age ? `${profile.age} years` : 'Not specified'}</Text>
+                      </View>
+                    </View>
+                    
+                    <View className="mb-5 border-b border-white/15 pb-4">
+                      <Text className="text-gray-400 mb-2 text-sm">Top Concerns</Text>
+                      <View className="flex-row items-center">
+                        <Feather name="alert-circle" size={16} color="#FFFFFF" style={{ marginRight: 8 }} />
+                        <Text className="text-white text-lg font-medium">{getHairConcerns()}</Text>
+                      </View>
+                    </View>
+                    
+                    <View className="mb-5 border-b border-white/15 pb-4">
+                      <Text className="text-gray-400 mb-2 text-sm">Main Goals</Text>
+                      <View className="flex-row items-center">
+                        <Feather name="target" size={16} color="#FFFFFF" style={{ marginRight: 8 }} />
+                        <Text className="text-white text-lg font-medium">{getHairGoals()}</Text>
+                      </View>
+                    </View>
+                    
+                    <View className="mb-5 border-b border-white/15 pb-4">
+                      <Text className="text-gray-400 mb-2 text-sm">Routine Preference</Text>
+                      <View className="flex-row items-center">
+                        <Feather name="clock" size={16} color="#FFFFFF" style={{ marginRight: 8 }} />
+                        <Text className="text-white text-lg font-medium">{profile?.routine_preference || 'Not specified'}</Text>
+                      </View>
+                    </View>
+                    
+                    <View className="mb-1">
+                      <Text className="text-gray-400 mb-2 text-sm">Product Preference</Text>
+                      <View className="flex-row items-center">
+                        <Feather name="shopping-bag" size={16} color="#FFFFFF" style={{ marginRight: 8 }} />
+                        <Text className="text-white text-lg font-medium">{profile?.product_preference || 'Not specified'}</Text>
+                      </View>
+                    </View>
+                  </View>
+                </BlurView>
+              </Animated.View>
+              
+              <Animated.View 
+                entering={FadeInDown.delay(800).duration(800)}
+                className="mb-8"
+              >
+                <View className="bg-gradient-to-br from-primary/30 to-primary/10 backdrop-blur-lg border border-primary/30 rounded-2xl p-6 shadow-lg">
+                  <View className="items-center mb-3">
+                    <Feather name="calendar" size={28} color="#AA8AD2" />
+                  </View>
+                  <Text className="text-white text-xl font-bold mb-3 text-center">
+                    Your Hair Transformation Starts Today
+                  </Text>
+                  <Text className="text-gray-200 text-center leading-5">
+                    Follow your personalized routine to achieve your hair goals. 
+                    Track your progress and see visible results in just a few weeks!
+                  </Text>
+                </View>
+              </Animated.View>
+              
+              <Animated.View 
+                entering={FadeInDown.delay(1200).duration(800)}
+                className="mt-4"
+              >
+                <Button 
+                  variant="primary"
+                  size="lg"
+                  fullWidth
+                  isLoading={isLoading}
+                  icon="activity"
+                  onPress={handleFinish}
+                  className="h-14 rounded-xl shadow-lg shadow-primary/40"
+                >
+                  Start My Hair Journey
+                </Button>
+                
+                <Text className="text-gray-400 mt-4 text-center text-xs">
+                  Your profile can be updated anytime from settings
+                </Text>
+              </Animated.View>
+            </ScrollView>
+          </View>
+        </SafeAreaView>
+      </LinearGradient>
+    </ImageBackground>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#222222',
-  },
-  screenContainer: {
-    flex: 1,
-  },
-  progressContainer: {
-    paddingHorizontal: 20,
-    paddingTop: 16,
-  },
-  progressBackground: {
-    height: 6,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    borderRadius: 3,
-    overflow: 'hidden',
-  },
-  progressFill: {
-    height: '100%',
-    backgroundColor: '#AA8AD2',
-    borderRadius: 3,
-  },
-  header: {
-    paddingHorizontal: 20,
-    paddingTop: 16,
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  backButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  backText: {
-    color: '#FFFF00',
-    marginLeft: 4,
-  },
-  scrollView: {
-    flex: 1,
-  },
-  contentContainer: {
-    paddingHorizontal: 20,
-    paddingBottom: 40,
-  },
-  titleContainer: {
-    alignItems: 'center',
-    marginTop: 24,
-    marginBottom: 32,
-  },
-  checkmarkContainer: {
-    marginBottom: 16,
-  },
-  title: {
-    color: '#FFFFFF',
-    fontSize: 28,
-    fontWeight: 'bold',
-    marginBottom: 12,
-    textAlign: 'center',
-  },
-  subtitle: {
-    color: '#CCCCCC',
-    fontSize: 16,
-    textAlign: 'center',
-    lineHeight: 24,
-  },
-  summaryContainer: {
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-    borderRadius: 12,
-    padding: 20,
-    marginBottom: 24,
-  },
-  summaryTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#FFFFFF',
-    marginBottom: 16,
-    textAlign: 'center',
-  },
-  summaryItem: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 12,
-    padding: 8,
-    borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255, 255, 255, 0.1)',
-  },
-  summaryLabel: {
-    fontSize: 16,
-    color: '#CCCCCC',
-  },
-  summaryValue: {
-    fontSize: 16,
-    color: '#FFFFFF',
-    fontWeight: '500',
-    maxWidth: '60%',
-    textAlign: 'right',
-  },
-  inspirationalContainer: {
-    backgroundColor: '#AA8AD2',
-    paddingVertical: 20,
-    paddingHorizontal: 24,
-    borderRadius: 12,
-    marginBottom: 32,
-  },
-  inspirationalTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#FFFFFF',
-    marginBottom: 8,
-    textAlign: 'center',
-  },
-  inspirationalText: {
-    fontSize: 14,
-    color: '#FFFFFF',
-    textAlign: 'center',
-  },
-  buttonContainer: {
-    marginBottom: 40,
-  },
-  button: {
-    backgroundColor: '#4CAF50',
-    paddingVertical: 14,
-    borderRadius: 12,
-  },
-  buttonText: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: '600',
-    textAlign: 'center',
-  },
-});

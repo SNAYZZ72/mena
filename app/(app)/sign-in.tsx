@@ -2,17 +2,19 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "expo-router";
 import React, { useState } from "react";
 import { useForm } from "react-hook-form";
-import { ActivityIndicator, View, StyleSheet, TouchableOpacity, Alert } from "react-native";
+import { View, TouchableOpacity, Alert, ImageBackground, StatusBar } from "react-native";
 import * as z from "zod";
-import Animated, { FadeInUp } from "react-native-reanimated";
+import Animated, { FadeInUp, FadeIn } from "react-native-reanimated";
 import { Feather } from '@expo/vector-icons';
+import { LinearGradient } from "expo-linear-gradient";
 
 import { SafeAreaView } from "@/components/safe-area-view";
 import { Button } from "@/components/ui/button";
 import { Form, FormField, FormInput } from "@/components/ui/form";
-import { Text } from "@/components/ui/text";
 import { AuthHeader } from "@/components/ui/auth-header";
+import { Body, Small } from "@/components/ui/typography";
 import { useSupabase } from "@/context/supabase-provider";
+import { getUserFriendlyErrorMessage } from "@/utils/error-handler";
 
 // Form validation schema
 const formSchema = z.object({
@@ -21,7 +23,7 @@ const formSchema = z.object({
 });
 
 export default function SignInScreen() {
-  const { signInWithPassword } = useSupabase();
+  const { signIn } = useSupabase();
   const router = useRouter();
   const [showPassword, setShowPassword] = useState(false);
 
@@ -35,172 +37,139 @@ export default function SignInScreen() {
 
   async function onSubmit(data: z.infer<typeof formSchema>) {
     try {
-      await signInWithPassword(data.email, data.password);
+      await signIn(data.email, data.password);
       form.reset();
-    } catch (error: any) {
+    } catch (error) {
       Alert.alert(
         "Sign In Failed",
-        error.message || "Please check your credentials and try again",
+        getUserFriendlyErrorMessage(error),
         [{ text: "OK" }]
       );
-      console.log(error.message);
+      console.error("Sign in error:", error);
     }
   }
 
   return (
-    <SafeAreaView style={styles.container}>
-      <Animated.View 
-        entering={FadeInUp.duration(800)}
-        style={styles.content}
+    <ImageBackground
+      source={require('@/assets/login-bg.png')} 
+      style={{ flex: 1 }}
+      resizeMode="cover"
+    >
+      <StatusBar translucent backgroundColor="transparent" barStyle="light-content" />
+      <LinearGradient
+        colors={['rgba(34, 34, 34, 0.4)', 'rgba(34, 34, 34, 0.85)']}
+        style={{ flex: 1 }}
       >
-        <AuthHeader
-          title="Welcome Back"
-          subtitle="Sign in to continue your hair care journey"
-          showBackButton
-        />
-
-        <Form {...form}>
-          <View style={styles.formContainer}>
-            <FormField
-              control={form.control}
-              name="email"
-              render={({ field }) => (
-                <FormInput
-                  label="Email"
-                  placeholder="Enter your email"
-                  autoCapitalize="none"
-                  autoComplete="email"
-                  autoCorrect={false}
-                  keyboardType="email-address"
-                  style={styles.input}
-                  {...field}
-                />
-              )}
-            />
-            
-            <FormField
-              control={form.control}
-              name="password"
-              render={({ field }) => (
-                <View style={styles.passwordContainer}>
-                  <FormInput
-                    label="Password"
-                    placeholder="Enter your password"
-                    autoCapitalize="none"
-                    autoCorrect={false}
-                    secureTextEntry={!showPassword}
-                    style={styles.input}
-                    {...field}
-                  />
-                  <TouchableOpacity 
-                    style={styles.eyeIcon}
-                    onPress={() => setShowPassword(!showPassword)}
-                  >
-                    <Feather name={showPassword ? 'eye-off' : 'eye'} size={20} color="#666666" />
-                  </TouchableOpacity>
-                </View>
-              )}
-            />
-            
-            <TouchableOpacity
-              style={styles.forgotPasswordLink}
-              onPress={() => router.push("/forgot-password")}
-            >
-              <Text style={styles.forgotPasswordText}>Forgot password?</Text>
-            </TouchableOpacity>
-          </View>
-        </Form>
-        
-        <View style={styles.buttonContainer}>
-          <Button
-            style={styles.signInButton}
-            onPress={form.handleSubmit(onSubmit)}
-            disabled={form.formState.isSubmitting}
+        <SafeAreaView className="flex-1">
+          <Animated.View 
+            entering={FadeInUp.duration(800)}
+            className="flex-1 px-6 py-4"
           >
-            {form.formState.isSubmitting ? (
-              <ActivityIndicator color="#FFFFFF" size="small" />
-            ) : (
-              <Text style={styles.signInButtonText}>Sign In</Text>
-            )}
-          </Button>
-          
-          <View style={styles.signUpContainer}>
-            <Text style={styles.signUpText}>Don't have an account?</Text>
-            <TouchableOpacity onPress={() => router.push("/sign-up")}>
-              <Text style={styles.signUpLink}>Sign Up</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </Animated.View>
-    </SafeAreaView>
+            <Animated.View entering={FadeIn.delay(300).duration(800)}>
+              <AuthHeader
+                title="Welcome Back"
+                subtitle="Sign in to continue your hair care journey"
+                showBackButton
+                lightMode
+              />
+            </Animated.View>
+
+            <View className="mt-8">
+              <Form {...form}>
+                <View className="space-y-5">
+                  <Animated.View entering={FadeInUp.delay(400).duration(800)}>
+                    <FormField
+                      control={form.control}
+                      name="email"
+                      render={({ field }) => (
+                        <FormInput
+                          label="Email"
+                          placeholder="Enter your email"
+                          autoCapitalize="none"
+                          autoComplete="email"
+                          autoCorrect={false}
+                          keyboardType="email-address"
+                          icon="mail"
+                          fullWidth
+                          darkMode
+                          {...field}
+                        />
+                      )}
+                    />
+                  </Animated.View>
+                  
+                  <Animated.View entering={FadeInUp.delay(600).duration(800)}>
+                    <FormField
+                      control={form.control}
+                      name="password"
+                      render={({ field }) => (
+                        <View className="relative">
+                          <FormInput
+                            label="Password"
+                            placeholder="Enter your password"
+                            autoCapitalize="none"
+                            autoCorrect={false}
+                            secureTextEntry={!showPassword}
+                            icon="lock"
+                            fullWidth
+                            darkMode
+                            {...field}
+                          />
+                          <TouchableOpacity 
+                            className="absolute right-3 top-11"
+                            onPress={() => setShowPassword(!showPassword)}
+                            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                          >
+                            <Feather name={showPassword ? 'eye-off' : 'eye'} size={20} color="#fff" />
+                          </TouchableOpacity>
+                        </View>
+                      )}
+                    />
+                  </Animated.View>
+                  
+                  <Animated.View 
+                    entering={FadeInUp.delay(700).duration(800)}
+                    className="items-end"
+                  >
+                    <TouchableOpacity
+                      onPress={() => router.push("/forgot-password")}
+                      hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                    >
+                      <Small className="text-primary font-medium">Forgot password?</Small>
+                    </TouchableOpacity>
+                  </Animated.View>
+                </View>
+              </Form>
+            </View>
+            
+            <Animated.View 
+              entering={FadeInUp.delay(800).duration(800)}
+              className="mt-auto mb-6 space-y-4"
+            >
+              <Button
+                variant="primary"
+                size="lg"
+                fullWidth
+                isLoading={form.formState.isSubmitting}
+                onPress={form.handleSubmit(onSubmit)}
+                icon="log-in"
+              >
+                Sign In
+              </Button>
+              
+              <View className="flex-row justify-center items-center">
+                <Body color="#fff">Don't have an account?</Body>
+                <TouchableOpacity 
+                  onPress={() => router.push("/sign-up")}
+                  hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                >
+                  <Body className="text-primary font-bold ml-1">Sign Up</Body>
+                </TouchableOpacity>
+              </View>
+            </Animated.View>
+          </Animated.View>
+        </SafeAreaView>
+      </LinearGradient>
+    </ImageBackground>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#FFFFFF",
-  },
-  content: {
-    flex: 1,
-    padding: 24,
-  },
-  formContainer: {
-    marginTop: 20,
-  },
-  input: {
-    backgroundColor: "#F6F6F6",
-    borderColor: "#E0E0E0",
-    borderRadius: 12,
-    paddingHorizontal: 16,
-    fontSize: 16,
-    color: "#333333",
-  },
-  passwordContainer: {
-    position: "relative",
-  },
-  eyeIcon: {
-    position: "absolute",
-    right: 16,
-    top: 46, // Adjust based on your input height and label
-  },
-  forgotPasswordLink: {
-    alignSelf: "flex-end",
-    marginTop: 12,
-    marginBottom: 24,
-  },
-  forgotPasswordText: {
-    color: "#AA8AD2",
-    fontSize: 14,
-    fontWeight: "500",
-  },
-  buttonContainer: {
-    marginTop: "auto",
-    marginBottom: 24,
-  },
-  signInButton: {
-    backgroundColor: "#AA8AD2",
-    borderRadius: 12,
-    paddingVertical: 14,
-  },
-  signInButtonText: {
-    color: "#FFFFFF",
-    fontSize: 16,
-    fontWeight: "600",
-  },
-  signUpContainer: {
-    flexDirection: "row",
-    justifyContent: "center",
-    marginTop: 16,
-  },
-  signUpText: {
-    color: "#666666",
-    fontSize: 14,
-  },
-  signUpLink: {
-    color: "#AA8AD2",
-    fontSize: 14,
-    fontWeight: "600",
-    marginLeft: 4,
-  },
-});

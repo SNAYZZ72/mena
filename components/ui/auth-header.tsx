@@ -12,6 +12,7 @@ interface AuthHeaderProps {
   subtitle?: string;
   showBackButton?: boolean;
   onBackPress?: () => void;
+  lightMode?: boolean;
 }
 
 export const AuthHeader: React.FC<AuthHeaderProps> = ({
@@ -19,6 +20,7 @@ export const AuthHeader: React.FC<AuthHeaderProps> = ({
   subtitle,
   showBackButton = false,
   onBackPress,
+  lightMode = false,
 }) => {
   const router = useRouter();
 
@@ -39,14 +41,19 @@ export const AuthHeader: React.FC<AuthHeaderProps> = ({
           accessibilityRole="button"
           accessibilityLabel="Go back"
         >
-          <Feather name="arrow-left" size={24} color="#333333" />
+          <Feather name="arrow-left" size={24} color={lightMode ? "#FFFFFF" : "#333333"} />
         </TouchableOpacity>
       )}
       
       <View style={styles.titleContainer}>
-        <H1 className="text-2xl font-bold" style={styles.title}>{title}</H1>
+        <H1 className={`text-2xl font-bold ${lightMode ? 'text-white' : 'text-gray-800'}`}>
+          {title}
+        </H1>
         {subtitle && (
-          <Text className="text-base mt-2" style={styles.subtitle}>{subtitle}</Text>
+          <Text 
+            className={`text-base mt-2 ${lightMode ? 'text-gray-300' : 'text-gray-600'}`}>
+            {subtitle}
+          </Text>
         )}
       </View>
     </View>
@@ -67,7 +74,13 @@ const styles = StyleSheet.create({
   title: {
     color: "#333333",
   },
+  titleLight: {
+    color: "#FFFFFF",
+  },
   subtitle: {
     color: "#666666",
+  },
+  subtitleLight: {
+    color: "#CCCCCC",
   },
 });

@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import { View, StyleSheet, ScrollView, TouchableOpacity, ImageBackground, StatusBar } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Feather } from '@expo/vector-icons';
-import Animated from 'react-native-reanimated';
+import Animated, { FadeIn, FadeInUp } from 'react-native-reanimated';
+import { LinearGradient } from 'expo-linear-gradient';
 
 import { useSetup } from '@/context/setup-provider';
 import { ButtonOption } from '@/components/ui/setup-components';
@@ -10,28 +11,32 @@ import { SafeAreaView } from '@/components/safe-area-view';
 import { Text } from '@/components/ui/text';
 import { H1 } from '@/components/ui/typography';
 import { Button } from '@/components/ui/button';
+import { HairGoal } from '@/types/profile';
 
-// Hair goals options
+// Hair goals options with mapping to HairGoal type values
 const hairGoalOptions = [
-  { id: '1', label: 'Moisture & Hydration', value: 'hydration' },
-  { id: '2', label: 'Hair Growth', value: 'growth' },
-  { id: '3', label: 'Reduce Breakage', value: 'reduce_breakage' },
-  { id: '4', label: 'Curl Definition', value: 'curl_definition' },
-  { id: '5', label: 'Repair Damage', value: 'repair_damage' },
-  { id: '6', label: 'Add Volume', value: 'volume' },
-  { id: '7', label: 'Scalp Health', value: 'scalp_health' },
-  { id: '8', label: 'Reduce Frizz', value: 'reduce_frizz' },
-  { id: '9', label: 'Color Protection', value: 'color_protection' },
-  { id: '10', label: 'Shine & Luster', value: 'shine' },
+  { id: '1', label: 'Moisture & Hydration', value: 'moisture' as HairGoal, icon: 'droplet' },
+  { id: '2', label: 'Hair Growth', value: 'growth' as HairGoal, icon: 'trending-up' },
+  { id: '3', label: 'Reduce Breakage', value: 'strength' as HairGoal, icon: 'shield' },
+  { id: '4', label: 'Curl Definition', value: 'definition' as HairGoal, icon: 'circle' },
+  { id: '5', label: 'Repair Damage', value: 'repair' as HairGoal, icon: 'tool' },
+  { id: '6', label: 'Add Volume', value: 'volume' as HairGoal, icon: 'layers' },
+  { id: '7', label: 'Scalp Health', value: 'scalp' as HairGoal, icon: 'heart' },
+  { id: '8', label: 'Reduce Frizz', value: 'frizz' as HairGoal, icon: 'wind' },
+  { id: '9', label: 'Color Protection', value: 'color' as HairGoal, icon: 'shield' },
+  { id: '10', label: 'Shine & Luster', value: 'shine' as HairGoal, icon: 'sun' },
 ];
 
 export default function HairGoalsScreen() {
   const router = useRouter();
-  const { hairProfile, updateProfile, progress, currentStep, nextStep } = useSetup();
-  const [selectedGoals, setSelectedGoals] = useState<string[]>(hairProfile.hairGoals || []);
+  const { profile, updateProfile } = useSetup();
+  const [selectedGoals, setSelectedGoals] = useState<HairGoal[]>(profile?.hair_goals || []);
+
+  // For progress indication (estimate 60% complete at this step)
+  const progress = 60;
 
   // Handle selection
-  const handleToggle = (value: string) => {
+  const handleToggle = (value: HairGoal) => {
     setSelectedGoals(prev => {
       let newSelection;
       if (prev.includes(value)) {
@@ -46,7 +51,7 @@ export default function HairGoalsScreen() {
       }
       
       // Save selection
-      updateProfile('hairGoals', newSelection);
+      updateProfile('hair_goals', newSelection);
       return newSelection;
     });
   };
@@ -54,8 +59,6 @@ export default function HairGoalsScreen() {
 
   // Handle continue button press
   const handleContinue = () => {
-    // Increment the step counter before navigating
-    nextStep();
     console.log('Hair goals selected:', selectedGoals, '- navigating to next screen');
     router.push('/(app)/setup/routine-preferences');
   };
@@ -66,77 +69,142 @@ export default function HairGoalsScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.screenContainer}>
-        {/* Progress Bar */}
-        <View style={styles.progressContainer}>
-          <View style={styles.progressBackground}>
-            <Animated.View 
-              style={[
-                styles.progressFill, 
-                { width: `${progress}%` }
-              ]}
-            />
-          </View>
-        </View>
-        
-        {/* Header */}
-        <View style={styles.header}>
-          <TouchableOpacity onPress={handleBack} style={styles.backButton}>
-            <Feather name="chevron-left" size={24} color="#FFFFFF" />
-            <Text style={styles.backText}>Back</Text>
-          </TouchableOpacity>
-        </View>
-        
-        {/* Content */}
-        <ScrollView 
-          style={styles.scrollView} 
-          contentContainerStyle={styles.contentContainer}
-          showsVerticalScrollIndicator={false}
-        >
-          <View style={styles.titleContainer}>
-            <H1 style={styles.title}>What Is Your Goal?</H1>
-            <Text style={styles.subtitle}>Select up to 3 hair goals that are most important to you</Text>
-          </View>
-          
-          <View style={styles.optionsContainer}>
-            {hairGoalOptions.map((option) => (
-              <View key={option.id} style={styles.buttonOptionWrapper}>
-                <ButtonOption
-                  option={option}
-                  isSelected={selectedGoals.includes(option.value)}
-                  onSelect={handleToggle}
+    <ImageBackground
+      source={require('@/assets/setup-bg.png')}
+      style={{ flex: 1 }}
+      resizeMode="cover"
+    >
+      <StatusBar translucent backgroundColor="transparent" barStyle="light-content" />
+      <LinearGradient
+        colors={['rgba(34, 34, 34, 0.3)', 'rgba(34, 34, 34, 0.9)']}
+        style={{ flex: 1 }}
+      >
+        <SafeAreaView style={styles.container}>
+          <View style={styles.screenContainer}>
+            {/* Progress Bar */}
+            <View style={styles.progressContainer}>
+              <View style={styles.progressBackground}>
+                <Animated.View 
+                  style={[
+                    styles.progressFill, 
+                    { width: `${progress}%` }
+                  ]}
                 />
               </View>
-            ))}
-          </View>
-          
-          <View style={styles.selectionSummary}>
-            <Text style={styles.summaryText}>
-              {selectedGoals.length === 0 
-                ? 'Select at least one goal (max 3)' 
-                : `You've selected ${selectedGoals.length}/3 goals`}
-            </Text>
-          </View>
-          
-          {selectedGoals.length > 0 && (
-            <Button 
-              style={styles.continueButton}
-              onPress={handleContinue}
+            </View>
+            
+            {/* Header */}
+            <View style={styles.header}>
+              <TouchableOpacity onPress={handleBack} style={styles.backButton}>
+                <Feather name="chevron-left" size={24} color="#FFFFFF" />
+                <Text style={styles.backText}>Back</Text>
+              </TouchableOpacity>
+            </View>
+            
+            {/* Content */}
+            <ScrollView 
+              style={styles.scrollView} 
+              contentContainerStyle={styles.contentContainer}
+              showsVerticalScrollIndicator={false}
             >
-              <Text style={styles.continueButtonText}>Continue</Text>
-            </Button>
-          )}
-        </ScrollView>
-      </View>
-    </SafeAreaView>
+              <Animated.View 
+                entering={FadeInUp.duration(800)}
+                style={styles.titleContainer}
+              >
+                <H1 style={styles.title}>What Is Your Goal?</H1>
+                <Text style={styles.subtitle}>Select up to 3 hair goals that are most important to you</Text>
+              </Animated.View>
+              
+              <Animated.View 
+                entering={FadeInUp.delay(300).duration(800)}
+                style={styles.optionsContainer}
+              >
+                {hairGoalOptions.map((option, index) => (
+                  <Animated.View
+                    key={option.id}
+                    entering={FadeInUp.delay(400 + (index * 70)).duration(600)}
+                    style={styles.goalItem}
+                  >
+                    <TouchableOpacity
+                      style={[
+                        styles.goalCard,
+                        selectedGoals.includes(option.value) && styles.selectedGoalCard
+                      ]}
+                      onPress={() => handleToggle(option.value)}
+                      activeOpacity={0.7}
+                      disabled={!selectedGoals.includes(option.value) && selectedGoals.length >= 3}
+                    >
+                      <View style={[
+                        styles.iconContainer,
+                        selectedGoals.includes(option.value) && styles.selectedIconContainer
+                      ]}>
+                        <Feather 
+                          name={option.icon as any} 
+                          size={20} 
+                          color={selectedGoals.includes(option.value) ? "#FFFFFF" : "#AA8AD2"} 
+                        />
+                      </View>
+                      
+                      <Text style={[
+                        styles.goalLabel,
+                        selectedGoals.includes(option.value) && styles.selectedGoalLabel,
+                        !selectedGoals.includes(option.value) && selectedGoals.length >= 3 && styles.disabledLabel
+                      ]}>
+                        {option.label}
+                      </Text>
+                      
+                      {selectedGoals.includes(option.value) && (
+                        <View style={styles.checkIndicator}>
+                          <Feather name="check" size={16} color="#FFFFFF" />
+                        </View>
+                      )}
+                    </TouchableOpacity>
+                  </Animated.View>
+                ))}
+              </Animated.View>
+              
+              <Animated.View 
+                entering={FadeInUp.delay(1000).duration(800)}
+                style={styles.selectionSummary}
+              >
+                <View style={styles.iconInfoContainer}>
+                  <Feather name="info" size={18} color="#AA8AD2" />
+                </View>
+                <Text style={styles.summaryText}>
+                  {selectedGoals.length === 0 
+                    ? 'Select at least one goal (max 3)' 
+                    : `You've selected ${selectedGoals.length}/3 goals`}
+                </Text>
+              </Animated.View>
+              
+              {selectedGoals.length > 0 && (
+                <Animated.View
+                  entering={FadeInUp.delay(1200).duration(800)}
+                  style={styles.buttonContainer}
+                >
+                  <Button 
+                    variant="primary"
+                    size="lg"
+                    fullWidth
+                    icon="arrow-right"
+                    onPress={handleContinue}
+                    className="h-14 rounded-xl shadow-lg shadow-primary/40"
+                  >
+                    Continue
+                  </Button>
+                </Animated.View>
+              )}
+            </ScrollView>
+          </View>
+        </SafeAreaView>
+      </LinearGradient>
+    </ImageBackground>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#222222',
   },
   screenContainer: {
     flex: 1,
@@ -146,15 +214,15 @@ const styles = StyleSheet.create({
     paddingTop: 16,
   },
   progressBackground: {
-    height: 6,
+    height: 8,
     backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    borderRadius: 3,
+    borderRadius: 4,
     overflow: 'hidden',
   },
   progressFill: {
     height: '100%',
     backgroundColor: '#AA8AD2',
-    borderRadius: 3,
+    borderRadius: 4,
   },
   header: {
     paddingHorizontal: 20,
@@ -167,8 +235,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   backText: {
-    color: '#FFFF00',
+    color: '#FFFFFF',
     marginLeft: 4,
+    fontWeight: '500',
   },
   scrollView: {
     flex: 1,
@@ -183,45 +252,94 @@ const styles = StyleSheet.create({
   },
   title: {
     color: '#FFFFFF',
-    fontSize: 28,
+    fontSize: 32,
     fontWeight: 'bold',
     marginBottom: 12,
   },
   subtitle: {
-    color: '#CCCCCC',
+    color: '#E0E0E0',
     fontSize: 16,
     lineHeight: 24,
   },
   optionsContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
+    marginHorizontal: -6,
     marginBottom: 20,
   },
-  buttonOptionWrapper: {
-    marginBottom: 10,
+  goalItem: {
+    width: '50%',
+    padding: 6,
+    marginBottom: 4,
   },
-  selectionSummary: {
-    backgroundColor: 'rgba(170, 138, 210, 0.2)',
-    padding: 12,
-    borderRadius: 8,
-    marginTop: 10,
-    marginBottom: 20,
+  goalCard: {
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    borderRadius: 12,
+    padding: 14,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.15)',
+    flexDirection: 'row',
+    alignItems: 'center',
+    height: 60,
   },
-  summaryText: {
+  selectedGoalCard: {
+    backgroundColor: 'rgba(170, 138, 210, 0.25)',
+    borderColor: '#AA8AD2',
+  },
+  iconContainer: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 10,
+  },
+  selectedIconContainer: {
+    backgroundColor: '#AA8AD2',
+  },
+  goalLabel: {
     color: '#FFFFFF',
     fontSize: 14,
-    textAlign: 'center',
+    fontWeight: '500',
+    flex: 1,
   },
-  continueButton: {
-    backgroundColor: '#AA8AD2',
-    borderRadius: 12,
-    paddingVertical: 14,
-    marginTop: 10,
-    marginBottom: 30,
-  },
-  continueButtonText: {
+  selectedGoalLabel: {
     color: '#FFFFFF',
-    fontSize: 16,
     fontWeight: '600',
-  }
+  },
+  disabledLabel: {
+    color: 'rgba(255, 255, 255, 0.4)',
+  },
+  checkIndicator: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    backgroundColor: '#AA8AD2',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  selectionSummary: {
+    backgroundColor: 'rgba(170, 138, 210, 0.1)',
+    padding: 16,
+    borderRadius: 16,
+    marginVertical: 16,
+    flexDirection: 'row',
+    borderWidth: 1,
+    borderColor: 'rgba(170, 138, 210, 0.3)',
+  },
+  iconInfoContainer: {
+    marginRight: 12,
+    marginTop: 2,
+  },
+  summaryText: {
+    color: '#E0E0E0',
+    fontSize: 14,
+    flex: 1,
+    lineHeight: 20,
+  },
+  buttonContainer: {
+    marginTop: 16,
+    marginBottom: 20,
+  },
 });

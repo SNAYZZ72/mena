@@ -1,8 +1,10 @@
 import { useRouter } from "expo-router";
 import React, { useState, useRef, useEffect } from "react";
-import { View, FlatList, Dimensions, StyleSheet, TouchableOpacity, Platform } from "react-native";
+import { View, FlatList, Dimensions, StyleSheet, TouchableOpacity, StatusBar, ImageBackground } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import Animated, { FadeIn } from "react-native-reanimated";
+import Animated, { FadeIn, SlideInRight } from "react-native-reanimated";
+import { LinearGradient } from "expo-linear-gradient";
+import { Feather } from '@expo/vector-icons';
 
 import { SafeAreaView } from "@/components/safe-area-view";
 import { Button } from "@/components/ui/button";
@@ -13,41 +15,47 @@ import { OnboardingSlide, OnboardingSlideProps } from "@/components/ui/onboardin
 const { width } = Dimensions.get("window");
 const COLORS = {
   primary: '#AA8AD2',
-  accent: '#4CAF50',
+  accent: '#8BC34A',
   background: '#F8F9FA',
-  text: '#333333',
+  text: '#FFFFFF',
+  textSecondary: 'rgba(255, 255, 255, 0.8)',
+  dark: '#222222',
 };
 
 // Onboarding Data
-const slides: (OnboardingSlideProps & { id: string; buttonText?: string })[] = [
+const slides: (OnboardingSlideProps & { id: string; buttonText?: string; background?: any })[] = [
   {
     id: "1",
     title: "Welcome to MENA",
-    description: "Your personal hair care assistant",
+    description: "Your personal hair care assistant designed to transform your hair journey",
     isLogo: true,
     isFirst: true,
+    background: require('@/assets/onboarding-bg-1.png'),
   },
   {
     id: "2",
     title: "Personalized Care",
-    description: "Get customized routines based on your unique hair type and goals",
+    description: "Get customized routines and product recommendations based on your unique hair type and texture",
     icon: "user",
     iconType: 'feather',
+    background: require('@/assets/onboarding-bg-2.png'),
   },
   {
     id: "3",
-    title: "Track Progress",
-    description: "Monitor your hair health journey with visual tracking and reminders",
+    title: "Track Your Progress",
+    description: "Document your hair transformation with our visual tracking tools and celebrate your milestones",
     icon: "trending-up",
     iconType: 'feather',
+    background: require('@/assets/onboarding-bg-3.png'),
   },
   {
     id: "4",
-    title: "Join the Community",
-    description: "Connect with others and share tips for healthier hair",
+    title: "Join Our Community",
+    description: "Connect with others on similar hair journeys and share tips for achieving your hair goals",
     icon: "users",
     iconType: 'feather',
     buttonText: "Get Started",
+    background: require('@/assets/onboarding-bg-4.png'),
   },
 ];
 
@@ -55,11 +63,15 @@ const slides: (OnboardingSlideProps & { id: string; buttonText?: string })[] = [
 const ProgressDots: React.FC<{ count: number; currentIndex: number }> = ({ count, currentIndex }) => (
   <View style={styles.dotsContainer}>
     {Array.from({ length: count }).map((_, idx) => (
-      <View
+      <Animated.View
         key={idx}
+        entering={FadeIn.delay(300 + idx * 100)}
         style={[
           styles.dot,
-          { backgroundColor: idx === currentIndex ? COLORS.primary : '#D0D0D0' }
+          { 
+            width: idx === currentIndex ? 24 : 8,
+            backgroundColor: idx === currentIndex ? COLORS.accent : 'rgba(255, 255, 255, 0.5)' 
+          }
         ]}
       />
     ))}
@@ -136,17 +148,9 @@ export default function OnboardingScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-      {/* Skip Button */}
-      {currentIndex < slides.length - 1 && (
-        <TouchableOpacity 
-          style={styles.skipButton}
-          onPress={handleSkip}
-        >
-          <Text style={styles.skipText}>Skip</Text>
-        </TouchableOpacity>
-      )}
-
+    <View style={styles.container}>
+      <StatusBar translucent backgroundColor="transparent" barStyle="light-content" />
+      
       {/* Slides */}
       <FlatList
         ref={flatListRef}
@@ -161,81 +165,148 @@ export default function OnboardingScreen() {
           setCurrentIndex(index);
         }}
         renderItem={({ item }) => (
-          <OnboardingSlide
-            title={item.title}
-            description={item.description}
-            icon={item.icon}
-            iconType={item.iconType}
-            isLogo={item.isLogo}
-            isFirst={item.isFirst}
-          />
+          <ImageBackground 
+            source={item.background} 
+            style={styles.slideBackground}
+            resizeMode="cover"
+          >
+            <LinearGradient
+              colors={['rgba(0,0,0,0.1)', 'rgba(0,0,0,0.6)']}
+              style={styles.gradient}
+            >
+              <SafeAreaView style={styles.slide}>
+                {/* Skip Button */}
+                {currentIndex < slides.length - 1 && (
+                  <TouchableOpacity 
+                    style={styles.skipButton}
+                    onPress={handleSkip}
+                  >
+                    <Text style={styles.skipText}>Skip</Text>
+                  </TouchableOpacity>
+                )}
+                
+                <View style={styles.slideContent}>
+                  <OnboardingSlide
+                    title={item.title}
+                    description={item.description}
+                    icon={item.icon}
+                    iconType={item.iconType}
+                    isLogo={item.isLogo}
+                    isFirst={item.isFirst}
+                  />
+                </View>
+              </SafeAreaView>
+            </LinearGradient>
+          </ImageBackground>
         )}
       />
 
       {/* Bottom Navigation */}
-      <Animated.View 
-        entering={FadeIn} 
-        style={styles.bottomContainer}
-      >
+      <View style={styles.bottomContainer}>
         <ProgressDots count={slides.length} currentIndex={currentIndex} />
         
-        <Button
-          style={[
-            styles.button,
-            { backgroundColor: currentIndex === slides.length - 1 ? COLORS.accent : COLORS.primary }
-          ]}
-          onPress={currentIndex === slides.length - 1 ? completeOnboarding : handleNext}
+        <Animated.View 
+          entering={SlideInRight.delay(300)} 
+          style={styles.buttonContainer}
         >
-          <Text style={styles.buttonText}>
-            {currentIndex === slides.length - 1 
-              ? slides[currentIndex].buttonText || "Get Started" 
-              : "Next"}
-          </Text>
-        </Button>
-      </Animated.View>
-    </SafeAreaView>
+          <Button
+            style={[
+              styles.button,
+              { backgroundColor: currentIndex === slides.length - 1 ? COLORS.accent : COLORS.primary }
+            ]}
+            onPress={currentIndex === slides.length - 1 ? completeOnboarding : handleNext}
+          >
+            <View style={styles.buttonContent}>
+              <Text style={styles.buttonText}>
+                {currentIndex === slides.length - 1 
+                  ? slides[currentIndex].buttonText || "Get Started" 
+                  : "Next"}
+              </Text>
+              {currentIndex < slides.length - 1 && (
+                <Feather name="arrow-right" size={20} color="#FFFFFF" style={styles.buttonIcon} />
+              )}
+            </View>
+          </Button>
+        </Animated.View>
+      </View>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: COLORS.background,
+    backgroundColor: COLORS.dark,
+  },
+  slideBackground: {
+    width,
+    height: '100%',
+  },
+  gradient: {
+    flex: 1,
+  },
+  slide: {
+    flex: 1,
+    position: 'relative',
+  },
+  slideContent: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 24,
   },
   skipButton: {
-    position: "absolute",
-    top: Platform.OS === 'ios' ? 50 : 20,
+    position: 'absolute',
+    top: 50,
     right: 20,
+    padding: 10,
     zIndex: 10,
   },
   skipText: {
-    color: COLORS.primary,
+    color: COLORS.text,
+    fontWeight: '600',
     fontSize: 16,
-    fontWeight: "600",
   },
   bottomContainer: {
-    width: "100%",
-    padding: 20,
-    paddingBottom: Platform.OS === 'ios' ? 40 : 20,
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    paddingBottom: 50,
+    paddingHorizontal: 20,
+    backgroundColor: 'transparent',
   },
   dotsContainer: {
-    flexDirection: "row",
-    justifyContent: "center",
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
     marginBottom: 20,
   },
   dot: {
-    width: 8,
     height: 8,
     borderRadius: 4,
     marginHorizontal: 4,
   },
+  buttonContainer: {
+    alignItems: 'center',
+  },
   button: {
-    borderRadius: 12,
-    paddingVertical: 12,
+    paddingVertical: 14,
+    paddingHorizontal: 36,
+    borderRadius: 30,
+    minWidth: 200,
+  },
+  buttonContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   buttonText: {
-    color: "#FFFFFF",
-    fontSize: 16,
-    fontWeight: "600",
+    color: COLORS.text,
+    fontWeight: 'bold',
+    fontSize: 18,
+  },
+  buttonIcon: {
+    marginLeft: 8,
   },
 });

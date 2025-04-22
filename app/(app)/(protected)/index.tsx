@@ -6,7 +6,7 @@ import Animated, { FadeIn, FadeInDown } from 'react-native-reanimated';
 
 import { supabase } from "@/config/supabase";
 import { SafeAreaView } from "@/components/safe-area-view";
-import { H1, H2, H3, P, Muted } from "@/components/ui/typography";
+import { H1, H2, H3 } from "@/components/ui/typography";
 import { Text } from "@/components/ui/text";
 import { Button } from "@/components/ui/button";
 import { useSupabase } from "@/context/supabase-provider";

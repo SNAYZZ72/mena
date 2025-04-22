@@ -13,15 +13,30 @@ export default function ProtectedLayout() {
 		<Tabs
 			screenOptions={{
 				headerShown: false,
+				tabBarShowLabel: true,
 				tabBarStyle: {
+					position: 'absolute',
+					bottom: 16,
+					left: 16,
+					right: 16,
+					elevation: 5,
+					shadowColor: '#000',
+					shadowOffset: { width: 0, height: 4 },
+					shadowOpacity: 0.1,
+					shadowRadius: 8,
 					backgroundColor: isDark ? colors.dark.background : colors.light.background,
-					borderTopColor: isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)',
+					borderRadius: 30,
 					height: 60,
-					paddingBottom: 10,
-					paddingTop: 5,
+					borderTopWidth: 0,
+					paddingHorizontal: 20,
 				},
-				tabBarActiveTintColor: '#AA8AD2', // MENA purple color
+				tabBarItemStyle: {
+					borderRadius: 20,
+					marginVertical: 8,
+				},
+				tabBarActiveTintColor: '#AA8AD2',
 				tabBarInactiveTintColor: isDark ? '#666666' : '#999999',
+				tabBarActiveBackgroundColor: 'rgba(170,138,210,0.1)',
 				tabBarLabelStyle: {
 					fontSize: 12,
 					fontWeight: '500',
