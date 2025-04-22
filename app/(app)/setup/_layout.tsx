@@ -26,6 +26,7 @@ export default function SetupLayout() {
           <Stack.Screen name="hair-type" />
           <Stack.Screen name="hair-concerns" />
           <Stack.Screen name="hair-goals" />
+          <Stack.Screen name="image-assessment" />
           <Stack.Screen name="routine-preferences" />
           <Stack.Screen name="complete" />
         </Stack>

@@ -10,6 +10,7 @@ export type ChemicalProcess = 'color' | 'relaxer' | 'perm' | 'bleach' | 'none';
 export interface HairProfile {
   id?: string;
   user_id: string;
+  gender?: string;
   hair_type: HairType;
   hair_length: HairLength;
   hair_goals: HairGoal[];
@@ -19,6 +20,7 @@ export interface HairProfile {
   scalp_condition: Scalp;
   hair_concerns: ChemicalProcess[];
   age?: number;
+  photo_uri?: string;
   routine_preference?: string;
   product_preference?: string;
   created_at?: string;

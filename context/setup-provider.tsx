@@ -33,6 +33,7 @@ export const SetupProvider: React.FC<HairProfileProviderProps> = ({
   
   // Check if profile has all required fields
   const isComplete = Boolean(
+    profile?.gender &&
     profile?.hair_type &&
     profile?.hair_length &&
     profile?.hair_goals?.length &&
@@ -65,6 +66,7 @@ export const SetupProvider: React.FC<HairProfileProviderProps> = ({
           // Initialize a new profile with user_id
           setProfile({
             user_id: user.id,
+            gender: undefined,
             hair_type: 'straight',
             hair_length: 'medium',
             hair_goals: [],
@@ -105,6 +107,7 @@ export const SetupProvider: React.FC<HairProfileProviderProps> = ({
     
     setProfile({
       user_id: user.id,
+      gender: undefined,
       hair_type: 'straight',
       hair_length: 'medium',
       hair_goals: [],

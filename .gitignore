@@ -10,6 +10,12 @@ npm-debug.*
 *.orig.*
 web-build/
 
+.idea/
+.vscode/
+
+mena/
+
+
 .env
 
 .cursorrules

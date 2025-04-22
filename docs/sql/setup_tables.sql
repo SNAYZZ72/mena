@@ -13,6 +13,7 @@ CREATE TABLE IF NOT EXISTS public.hair_profiles (
   scalp_condition TEXT,
   hair_concerns TEXT[],
   hair_goals TEXT[],
+  photo_uri TEXT,
   age INTEGER,
   routine_preference TEXT,
   product_preference TEXT,

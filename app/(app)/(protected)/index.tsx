@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, ScrollView, TouchableOpacity, Image } from 'react-native';
+import { View, StyleSheet, ScrollView, TouchableOpacity, Image, FlatList } from 'react-native';
 import { router } from 'expo-router';
 import { Feather } from '@expo/vector-icons';
 import Animated, { FadeIn, FadeInDown } from 'react-native-reanimated';
@@ -134,6 +134,18 @@ const TaskCard = ({ task, onToggle }: { task: CareTask, onToggle: () => void }) 
 
 export default function HomeScreen() {
   const { user } = useSupabase();
+  // Prepare calendar strip data for next 7 days
+  const calendarData = React.useMemo(() => {
+    const days = [];
+    for (let i = 0; i < 7; i++) {
+      const d = new Date();
+      d.setDate(d.getDate() + i);
+      days.push({ day: d.getDate(), weekday: d.toLocaleDateString(undefined, { weekday: 'short' }), isToday: i === 0 });
+    }
+    return days;
+  }, []);
+  // Placeholder streak count
+  const streakCount = 1;
   const [profile, setProfile] = useState<HairProfile | null>(null);
   const [tasks, setTasks] = useState<CareTask[]>([]);
   const [tips, setTips] = useState<string[]>([]);
@@ -211,6 +223,18 @@ export default function HomeScreen() {
     ? Math.round((tasks.filter(t => t.completed).length / tasks.length) * 100)
     : 0;
 
+  // Build profile summary cards for carousel
+  const summaryData = React.useMemo(() => {
+    if (!profile) return [];
+    const items: { label: string; value: string }[] = [];
+    if (profile.hair_type) items.push({ label: 'Hair Type', value: formatHairType(profile.hair_type) });
+    if (profile.hair_concerns?.length) items.push({ label: 'Top Concern', value: profile.hair_concerns[0].charAt(0).toUpperCase() + profile.hair_concerns[0].slice(1).replace('_', ' ') });
+    if (profile.hair_goals?.length) items.push({ label: 'Goals', value: profile.hair_goals.join(', ') });
+    if (profile.routine_preference) items.push({ label: 'Routine', value: profile.routine_preference.charAt(0).toUpperCase() + profile.routine_preference.slice(1) });
+    if (profile.product_preference) items.push({ label: 'Product Pref', value: profile.product_preference.charAt(0).toUpperCase() + profile.product_preference.slice(1) });
+    return items;
+  }, [profile]);
+
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView 
@@ -223,10 +247,87 @@ export default function HomeScreen() {
             <Text style={styles.greeting}>{greeting}</Text>
             <H1 style={styles.userName}>{user?.email?.split('@')[0] || 'User'}</H1>
           </View>
-          <TouchableOpacity style={styles.profileButton}>
+          <TouchableOpacity style={styles.profileButton} onPress={() => router.push('/profile')}>
             <Feather name="user" size={24} color="#AA8AD2" />
           </TouchableOpacity>
         </View>
+        
+        {/* MyHair Tips Carousel */}
+        <Animated.View entering={FadeIn.delay(400).duration(600)} style={styles.carouselSection}>
+          <H2 style={styles.carouselTitle}>Myhair Tips for you</H2>
+          <FlatList
+            horizontal
+            data={tips}
+            keyExtractor={(_, idx) => idx.toString()}
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.carouselContent}
+            renderItem={({ item }) => (
+              <View style={styles.carouselItem}>
+                <Text style={styles.carouselItemText}>{item}</Text>
+              </View>
+            )}
+          />
+        </Animated.View>
+        
+        {/* Calendar Strip */}
+        <Animated.View entering={FadeInDown.delay(600).duration(600)} style={styles.calendarSection}>
+          <FlatList
+            horizontal
+            data={calendarData}
+            keyExtractor={item => item.weekday + item.day}
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.calendarContent}
+            renderItem={({ item }) => (
+              <View style={[styles.calendarItem, item.isToday && styles.calendarItemToday]}>
+                <Text style={[styles.calendarWeekday, item.isToday && styles.calendarWeekdayToday]}>{item.weekday}</Text>
+                <Text style={[styles.calendarDay, item.isToday && styles.calendarDayToday]}>{item.day}</Text>
+              </View>
+            )}
+          />
+        </Animated.View>
+        
+        {/* Streak Card */}
+        <Animated.View entering={FadeInDown.delay(800).duration(600)} style={styles.streakCard}>
+          <H2 style={styles.streakLabel}>MyHair Streak</H2>
+          <View style={styles.streakCountContainer}>
+            <Text style={styles.streakCount}>{streakCount}</Text>
+          </View>
+          <Text style={styles.streakNote}>Next scan tomorrow</Text>
+        </Animated.View>
+        
+        {/* Profile Summary Carousel */}
+        <Animated.View entering={FadeInDown.delay(1000).duration(600)} style={styles.summarySection}>
+          <H2 style={styles.sectionTitle}>Profile Summary</H2>
+          <FlatList
+            horizontal
+            data={summaryData}
+            keyExtractor={item => item.label}
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.summaryContent}
+            renderItem={({ item }) => (
+              <View style={styles.summaryCard}>
+                <Text style={styles.summaryLabel}>{item.label}</Text>
+                <Text style={styles.summaryValue}>{item.value}</Text>
+              </View>
+            )}
+          />
+        </Animated.View>
+        
+        {/* Daily Insights Timeline */}
+        <Animated.View entering={FadeInDown.delay(1200).duration(600)} style={styles.timelineSection}>
+          <H2 style={styles.sectionTitle}>Daily Insights</H2>
+          <View style={styles.timelineContainer}>
+            {tasks.map(task => (
+              <View key={task.id} style={styles.timelineItem}>
+                <View style={styles.timelineDot} />
+                <View style={styles.timelineContent}>
+                  <Text style={styles.timelineTitle}>{task.title}</Text>
+                  <Text style={styles.timelineStatus}>{task.completed ? 'Completed' : 'Pending'}</Text>
+                </View>
+              </View>
+            ))}
+          </View>
+        </Animated.View>
         
         {/* Hair Profile Summary */}
         <Animated.View 
@@ -374,6 +475,30 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#F8F9FA',
+  },
+  carouselSection: {
+    marginTop: 20,
+  },
+  carouselTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#333333',
+    marginHorizontal: 20,
+    marginBottom: 12,
+  },
+  carouselContent: {
+    paddingHorizontal: 20,
+  },
+  carouselItem: {
+    backgroundColor: '#AA8AD2',
+    padding: 16,
+    borderRadius: 16,
+    marginRight: 12,
+    width: 200,
+  },
+  carouselItemText: {
+    color: '#FFFFFF',
+    fontSize: 14,
   },
   scrollView: {
     flex: 1,
@@ -659,5 +784,136 @@ const styles = StyleSheet.create({
   },
   bottomPadding: {
     height: 40,
+  },
+  calendarSection: {
+    marginTop: 20,
+    paddingHorizontal: 20,
+  },
+  calendarContent: {
+    paddingVertical: 8,
+  },
+  calendarItem: {
+    width: 60,
+    alignItems: 'center',
+    marginRight: 12,
+    paddingVertical: 8,
+    borderRadius: 8,
+  },
+  calendarItemToday: {
+    backgroundColor: '#AA8AD2',
+  },
+  calendarWeekday: {
+    fontSize: 12,
+    color: '#666666',
+  },
+  calendarWeekdayToday: {
+    color: '#FFFFFF',
+  },
+  calendarDay: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#333333',
+    marginTop: 4,
+  },
+  calendarDayToday: {
+    color: '#FFFFFF',
+  },
+  streakCard: {
+    backgroundColor: '#FFFFFF',
+    marginHorizontal: 20,
+    marginTop: 16,
+    borderRadius: 16,
+    padding: 16,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 2,
+  },
+  streakLabel: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#333333',
+    marginBottom: 8,
+  },
+  streakCountContainer: {
+    backgroundColor: '#AA8AD2',
+    padding: 12,
+    borderRadius: 50,
+    marginBottom: 8,
+  },
+  streakCount: {
+    fontSize: 24,
+    color: '#FFFFFF',
+    fontWeight: 'bold',
+  },
+  streakNote: {
+    fontSize: 12,
+    color: '#666666',
+  },
+  // Profile summary carousel
+  summarySection: {
+    marginTop: 24,
+    paddingHorizontal: 20,
+  },
+  summaryContent: {
+    paddingVertical: 8,
+  },
+  summaryCard: {
+    backgroundColor: '#FFFFFF',
+    padding: 16,
+    borderRadius: 16,
+    marginRight: 12,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 2,
+  },
+  summaryLabel: {
+    fontSize: 12,
+    color: '#666666',
+    marginBottom: 4,
+  },
+  summaryValue: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#333333',
+  },
+  // Daily insights timeline
+  timelineSection: {
+    marginTop: 24,
+    paddingHorizontal: 20,
+  },
+  timelineContainer: {
+    marginTop: 8,
+  },
+  timelineItem: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    marginBottom: 12,
+  },
+  timelineDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#AA8AD2',
+    marginTop: 6,
+    marginRight: 12,
+  },
+  timelineContent: {
+    flex: 1,
+  },
+  timelineTitle: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#333333',
+  },
+  timelineStatus: {
+    fontSize: 12,
+    color: '#666666',
+    marginTop: 2,
   },
 });

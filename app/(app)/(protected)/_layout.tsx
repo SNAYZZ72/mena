@@ -73,14 +73,14 @@ export default function ProtectedLayout() {
 				}} 
 			/>
 			
-			<Tabs.Screen 
-				name="profile" 
-				options={{ 
-					title: "Profile",
+			<Tabs.Screen
+				name="advisor"
+				options={{
+					title: "MyAdvisor",
 					tabBarIcon: ({ color, size }) => (
-						<Feather name="user" size={size} color={color} />
+						<Feather name="message-circle" size={size} color={color} />
 					),
-				}} 
+				}}
 			/>
 		</Tabs>
 	);

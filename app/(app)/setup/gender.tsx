@@ -45,16 +45,15 @@ const genderOptions = [
 export default function GenderScreen() {
   const router = useRouter();
   const { profile, updateProfile } = useSetup();
-  const [selectedGender, setSelectedGender] = useState<string | undefined>(profile?.hair_texture === 'medium' ? undefined : profile?.hair_texture as string);
+  const [selectedGender, setSelectedGender] = useState<string | undefined>(profile?.gender);
   // For the progress bar - calculated based on current step
   const progress = 16.67; // Represents first step of 6 steps (100/6)
 
   // Handle gender selection and immediate navigation
   const handleSelect = (value: string) => {
     setSelectedGender(value);
-    // In this case, we'll need to store gender as a custom field
-    // We can use hair_texture temporarily to store gender
-    updateProfile('hair_texture', value as any);
+    // Store gender in its own field
+    updateProfile('gender', value);
     console.log('Gender selected:', value, '- navigating to next screen');
     router.push('/(app)/setup/age');
   };

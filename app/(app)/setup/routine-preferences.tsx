@@ -6,7 +6,6 @@ import Animated, { FadeIn, FadeInUp } from 'react-native-reanimated';
 import { LinearGradient } from 'expo-linear-gradient';
 
 import { useSetup } from '@/context/setup-provider';
-import { RadioOption } from '@/components/ui/setup-components';
 import { SafeAreaView } from '@/components/safe-area-view';
 import { Text } from '@/components/ui/text';
 import { H1 } from '@/components/ui/typography';

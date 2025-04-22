@@ -60,7 +60,7 @@ export default function HairGoalsScreen() {
   // Handle continue button press
   const handleContinue = () => {
     console.log('Hair goals selected:', selectedGoals, '- navigating to next screen');
-    router.push('/(app)/setup/routine-preferences');
+    router.push('/(app)/setup/image-assessment');
   };
 
   // Handle back button press
